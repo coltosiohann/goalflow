@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 export default function TestQuizPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Get task-7 which has the quiz
   const task7 = mockTasks.find((t) => t.id === "task-7");
@@ -19,6 +20,8 @@ export default function TestQuizPage() {
 
   const handleCompleteTask = () => {
     toast.success("Task completed! Great work! 🎉");
+    // Force refresh to show updated completion status
+    setRefreshKey(prev => prev + 1);
   };
 
   return (

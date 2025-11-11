@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Get active goal and today's tasks
   const activeGoal = mockGoals.find((g) => g.status === "active");
@@ -29,6 +30,8 @@ export default function DashboardPage() {
 
   const handleCompleteTask = () => {
     toast.success("Task completed! Great work! 🎉");
+    // Force refresh to show updated completion status
+    setRefreshKey(prev => prev + 1);
   };
 
   const currentTask = todaysTasks.find((t) => t.id === selectedTask);

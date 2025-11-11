@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink, X, CheckCircle2, Play, BookOpen, Brain } from "lucide-react";
-import { type Task, type TaskType } from "@/lib/mock";
+import { type Task, type TaskType, completeTask } from "@/lib/mock";
 import { QuizWidget } from "@/components/QuizWidget";
 import confetti from "canvas-confetti";
 
@@ -102,7 +102,8 @@ export function TaskDrawer({
     setQuizAnswers(answers);
 
     if (score >= 80) {
-      // Quiz passed! Mark task as complete
+      // Quiz passed! Mark task as complete in mock data
+      completeTask(task.id, score, answers);
       onComplete?.();
       triggerConfetti();
       setTimeout(() => {
@@ -127,6 +128,7 @@ export function TaskDrawer({
 
     // Otherwise complete the task normally (for tasks without quiz)
     if (!canComplete) return;
+    completeTask(task.id);
     onComplete?.();
     triggerConfetti();
     setTimeout(() => {

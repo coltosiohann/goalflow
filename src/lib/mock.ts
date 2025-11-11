@@ -390,3 +390,33 @@ export function getStreak(): number {
   // Mock streak calculation - in real app would check consecutive days
   return 7; // 7 day streak
 }
+
+export function completeTask(taskId: string, quizScore?: number, quizAnswers?: number[]): void {
+  // Check if task already has progress
+  const existingProgress = mockProgress.find((p) => p.taskId === taskId);
+
+  if (existingProgress) {
+    // Update existing progress
+    existingProgress.completed = true;
+    existingProgress.completedAt = new Date().toISOString();
+    if (quizScore !== undefined) {
+      existingProgress.quizResult = {
+        score: quizScore,
+        answers: quizAnswers || [],
+        attemptedAt: new Date().toISOString(),
+      };
+    }
+  } else {
+    // Add new progress entry
+    mockProgress.push({
+      taskId,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      quizResult: quizScore !== undefined ? {
+        score: quizScore,
+        answers: quizAnswers || [],
+        attemptedAt: new Date().toISOString(),
+      } : undefined,
+    });
+  }
+}
