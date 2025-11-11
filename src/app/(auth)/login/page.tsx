@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 
+// Prevent prerendering - this page needs runtime env vars
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
