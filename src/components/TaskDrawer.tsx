@@ -56,6 +56,19 @@ export function TaskDrawer({
   const quizPassed = quizScore !== null && quizScore >= 80;
   const canComplete = completed || !hasQuiz || quizPassed;
 
+  // Debug logging
+  console.log("TaskDrawer Debug:", {
+    taskId: task.id,
+    taskTitle: task.title,
+    hasQuiz,
+    quizLength: task.quiz?.length,
+    completed,
+    quizPassed,
+    quizScore,
+    canComplete,
+    shouldShowQuiz: hasQuiz && !completed,
+  });
+
   const triggerConfetti = () => {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
