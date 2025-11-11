@@ -65,7 +65,7 @@ export const mockGoals: Goal[] = [
     title: "Learn Python in 30 days",
     timeframeDays: 30,
     status: "active",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
   },
 ];
 
