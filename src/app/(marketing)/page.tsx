@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Hero } from "./_components/Hero";
+import { HeroDemo } from "./_components/HeroDemo";
 import { HowItWorks } from "./_components/HowItWorks";
 import { Features } from "./_components/Features";
 import { Testimonials } from "./_components/Testimonials";
@@ -57,7 +57,7 @@ export default function LandingPage() {
 
       {/* Main content */}
       <main>
-        <Hero />
+        <HeroDemo />
         <div id="how-it-works">
           <HowItWorks />
         </div>
