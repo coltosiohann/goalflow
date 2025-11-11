@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Drawer,
   DrawerClose,
@@ -47,6 +47,16 @@ export function TaskDrawer({
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
   const [videoWatched, setVideoWatched] = useState(false);
+  const [showingQuiz, setShowingQuiz] = useState(false);
+
+  // Reset quiz state when drawer closes
+  useEffect(() => {
+    if (!open) {
+      setShowingQuiz(false);
+      setQuizScore(null);
+      setQuizAnswers([]);
+    }
+  }, [open]);
 
   if (!task) return null;
 
@@ -92,12 +102,30 @@ export function TaskDrawer({
     setQuizAnswers(answers);
 
     if (score >= 80) {
-      // Trigger confetti celebration!
+      // Quiz passed! Mark task as complete
+      onComplete?.();
       triggerConfetti();
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
     }
   };
 
   const handleMarkComplete = () => {
+    // If task has a quiz and quiz hasn't been shown yet, show it
+    if (hasQuiz && !showingQuiz && !completed) {
+      setShowingQuiz(true);
+      // Scroll to quiz section
+      setTimeout(() => {
+        const quizSection = document.getElementById('quiz-section');
+        if (quizSection) {
+          quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return;
+    }
+
+    // Otherwise complete the task normally (for tasks without quiz)
     if (!canComplete) return;
     onComplete?.();
     triggerConfetti();
@@ -210,9 +238,9 @@ export function TaskDrawer({
               </div>
             )}
 
-            {/* Quiz Section */}
-            {hasQuiz && (
-              <div>
+            {/* Quiz Section - Only shows after user clicks "Mark as Done" */}
+            {hasQuiz && (showingQuiz || completed) && (
+              <div id="quiz-section" className="scroll-mt-4">
                 <div className="mb-3 flex items-center gap-2">
                   <Brain className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-neutral-900">
@@ -229,6 +257,11 @@ export function TaskDrawer({
                     </Badge>
                   )}
                 </div>
+                {!completed && (
+                  <div className="mb-4 rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
+                    Complete the quiz with 80% or higher to finish this task. Good luck! 🎯
+                  </div>
+                )}
                 <QuizWidget
                   questions={task.quiz}
                   onComplete={handleQuizComplete}
@@ -261,7 +294,7 @@ export function TaskDrawer({
           <DrawerFooter>
             <Button
               onClick={handleMarkComplete}
-              disabled={!canComplete}
+              disabled={completed || (hasQuiz && showingQuiz && !quizPassed)}
               className="h-12 w-full gap-2 rounded-xl text-base font-semibold"
             >
               {completed ? (
@@ -269,8 +302,13 @@ export function TaskDrawer({
                   <CheckCircle2 className="h-5 w-5" />
                   Completed
                 </>
-              ) : !canComplete ? (
-                "Complete Quiz to Continue"
+              ) : hasQuiz && !showingQuiz ? (
+                <>
+                  <Brain className="h-5 w-5" />
+                  I'm Ready for the Quiz!
+                </>
+              ) : hasQuiz && showingQuiz && !quizPassed ? (
+                "Complete Quiz to Finish"
               ) : (
                 "Mark as Done"
               )}
