@@ -130,6 +130,7 @@ export const mockTasks: Task[] = [
       { label: "Real Python - Variables", url: "https://realpython.com/python-variables/" },
       { label: "W3Schools Python Intro", url: "https://www.w3schools.com/python/" },
     ],
+    quiz: [],
     quiz: [], // Completed task - no quiz needed
   },
   {
@@ -221,6 +222,7 @@ export const mockTasks: Task[] = [
       { label: "Project Ideas", url: "https://realpython.com/python-projects-beginners/" },
       { label: "Building Python Apps", url: "https://automatetheboringstuff.com/" },
     ],
+    quiz: [],
     quiz: [
       {
         id: "q1",
@@ -258,6 +260,7 @@ export const mockTasks: Task[] = [
         explanation: "The if statement executes code conditionally based on whether a condition is true."
       },
     ],
+    quiz: [],
   },
   {
     id: "task-8",
