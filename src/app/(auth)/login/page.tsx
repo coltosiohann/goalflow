@@ -8,35 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { UserPlus, Mail, Lock, Loader2, User } from "lucide-react";
+import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 
-export default function SignupPage() {
-  const [fullName, setFullName] = useState("");
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
       });
 
       if (error) {
@@ -45,7 +33,7 @@ export default function SignupPage() {
       }
 
       if (data.user) {
-        toast.success("Account created! Welcome to GoalFlow!");
+        toast.success("Welcome back!");
         router.push("/dashboard");
         router.refresh();
       }
@@ -62,34 +50,16 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-              <UserPlus className="h-6 w-6 text-white" />
+              <LogIn className="h-6 w-6 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
           <p className="text-sm text-neutral-600">
-            Start your learning journey today
+            Sign in to continue your learning journey
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-neutral-700">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
-                <Input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
-                  className="rounded-xl pl-10"
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-neutral-700">
                 Email
@@ -122,12 +92,8 @@ export default function SignupPage() {
                   className="rounded-xl pl-10"
                   required
                   disabled={loading}
-                  minLength={6}
                 />
               </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                Must be at least 6 characters
-              </p>
             </div>
 
             <Button
@@ -138,24 +104,24 @@ export default function SignupPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating account...
+                  Signing in...
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4" />
-                  Sign Up
+                  <LogIn className="h-4 w-4" />
+                  Sign In
                 </>
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-neutral-600">
-            Already have an account?{" "}
+            Don't have an account?{" "}
             <Link
-              href="/login"
+              href="/signup"
               className="font-medium text-primary hover:underline"
             >
-              Sign in
+              Sign up
             </Link>
           </div>
 
