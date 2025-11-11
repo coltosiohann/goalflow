@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,36 +8,75 @@ import { TaskCard } from "@/components/TaskCard";
 import { TaskDrawer } from "@/components/TaskDrawer";
 import { ProgressBar } from "@/components/ProgressBar";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  mockGoals,
-  getTodaysTasks,
-  getTaskProgress,
-  getGoalProgress,
-  getStreak,
-} from "@/lib/mock";
-import { Target, Flame, Calendar } from "lucide-react";
+import { clientQueries, type Goal, type Task, type Progress } from "@/lib/supabase/queries";
+import { Target, Flame, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [activeGoal, setActiveGoal] = useState<Goal | null>(null);
+  const [todaysTasks, setTodaysTasks] = useState<Task[]>([]);
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [goalProgress, setGoalProgress] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Get active goal and today's tasks
-  const activeGoal = mockGoals.find((g) => g.status === "active");
-  const todaysTasks = activeGoal ? getTodaysTasks(activeGoal.id) : [];
-  const goalProgress = activeGoal ? getGoalProgress(activeGoal.id) : 0;
-  const streak = getStreak();
+  // Fetch data
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-  const handleCompleteTask = () => {
+      // Get active goal
+      const goal = await clientQueries.getActiveGoal();
+      setActiveGoal(goal);
+
+      if (goal) {
+        // Get today's tasks
+        const tasks = await clientQueries.getTodaysTasks(goal.id);
+        setTodaysTasks(tasks);
+
+        // Get goal progress
+        const gProgress = await clientQueries.getGoalProgress(goal.id);
+        setGoalProgress(gProgress);
+      }
+
+      // Get user progress
+      const userProgress = await clientQueries.getProgress();
+      setProgress(userProgress);
+
+      // Get streak
+      const userStreak = await clientQueries.getStreak();
+      setStreak(userStreak);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleCompleteTask = async () => {
     toast.success("Task completed! Great work! 🎉");
-    // Force refresh to show updated completion status
-    setRefreshKey(prev => prev + 1);
+    // Refresh data
+    await fetchData();
   };
 
   const currentTask = todaysTasks.find((t) => t.id === selectedTask);
   const isTaskCompleted = currentTask
-    ? getTaskProgress(currentTask.id)?.completed ?? false
+    ? progress.find((p) => p.task_id === currentTask.id)?.completed ?? false
     : false;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

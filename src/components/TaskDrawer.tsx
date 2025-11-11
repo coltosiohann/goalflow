@@ -14,9 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink, X, CheckCircle2, Play, BookOpen, Brain } from "lucide-react";
-import { type Task, type TaskType, completeTask } from "@/lib/mock";
+import { clientQueries, type Task } from "@/lib/supabase/queries";
 import { QuizWidget } from "@/components/QuizWidget";
 import confetti from "canvas-confetti";
+
+type TaskType = 'plan' | 'learn' | 'practice' | 'review';
 
 interface TaskDrawerProps {
   task: Task | null;
@@ -97,22 +99,26 @@ export function TaskDrawer({
     }, 250);
   };
 
-  const handleQuizComplete = (score: number, answers: number[]) => {
+  const handleQuizComplete = async (score: number, answers: number[]) => {
     setQuizScore(score);
     setQuizAnswers(answers);
 
     if (score >= 80) {
-      // Quiz passed! Mark task as complete in mock data
-      completeTask(task.id, score, answers);
-      onComplete?.();
-      triggerConfetti();
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1000);
+      try {
+        // Quiz passed! Mark task as complete in database
+        await clientQueries.completeTask(task.id, score, answers);
+        onComplete?.();
+        triggerConfetti();
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 1000);
+      } catch (error) {
+        console.error('Error completing task:', error);
+      }
     }
   };
 
-  const handleMarkComplete = () => {
+  const handleMarkComplete = async () => {
     // If task has a quiz and quiz hasn't been shown yet, show it
     if (hasQuiz && !showingQuiz && !completed) {
       setShowingQuiz(true);
@@ -128,12 +134,17 @@ export function TaskDrawer({
 
     // Otherwise complete the task normally (for tasks without quiz)
     if (!canComplete) return;
-    completeTask(task.id);
-    onComplete?.();
-    triggerConfetti();
-    setTimeout(() => {
-      onOpenChange(false);
-    }, 1000);
+
+    try {
+      await clientQueries.completeTask(task.id);
+      onComplete?.();
+      triggerConfetti();
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error completing task:', error);
+    }
   };
 
   return (
@@ -213,7 +224,7 @@ export function TaskDrawer({
             )}
 
             {/* Resources */}
-            {task.resources.length > 0 && (
+            {task.resources && task.resources.length > 0 && (
               <div>
                 <div className="mb-3 flex items-center gap-2">
                   <ExternalLink className="h-5 w-5 text-primary" />
