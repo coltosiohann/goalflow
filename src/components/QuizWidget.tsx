@@ -21,15 +21,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [quizComplete, setQuizComplete] = useState(false);
 
-  // Debug logging
-  console.log("QuizWidget Debug:", {
-    questionsLength: questions?.length,
-    questions: questions,
-    currentQuestion,
-  });
-
   if (questions.length === 0) {
-    console.log("QuizWidget: No questions provided, returning null");
     return null; // No quiz for this task
   }
 

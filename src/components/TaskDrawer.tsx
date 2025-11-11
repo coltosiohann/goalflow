@@ -56,19 +56,6 @@ export function TaskDrawer({
   const quizPassed = quizScore !== null && quizScore >= 80;
   const canComplete = completed || !hasQuiz || quizPassed;
 
-  // Debug logging
-  console.log("TaskDrawer Debug:", {
-    taskId: task.id,
-    taskTitle: task.title,
-    hasQuiz,
-    quizLength: task.quiz?.length,
-    completed,
-    quizPassed,
-    quizScore,
-    canComplete,
-    shouldShowQuiz: hasQuiz && !completed,
-  });
-
   const triggerConfetti = () => {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
@@ -224,14 +211,19 @@ export function TaskDrawer({
             )}
 
             {/* Quiz Section */}
-            {hasQuiz && !completed && (
+            {hasQuiz && (
               <div>
                 <div className="mb-3 flex items-center gap-2">
                   <Brain className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-neutral-900">
                     Knowledge Check
                   </h3>
-                  {quizPassed && (
+                  {completed && (
+                    <Badge className="bg-green-100 text-green-700">
+                      Completed
+                    </Badge>
+                  )}
+                  {quizPassed && !completed && (
                     <Badge className="bg-green-100 text-green-700">
                       Passed ({quizScore}%)
                     </Badge>
