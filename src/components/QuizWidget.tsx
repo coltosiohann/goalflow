@@ -135,22 +135,23 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
               )}
 
               {/* Actions */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <Button
-                  onClick={handleRetake}
-                  variant="outline"
-                  className="gap-2 rounded-xl"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Retake Quiz
-                </Button>
-                {passed && (
-                  <Button className="gap-2 rounded-xl bg-green-600 hover:bg-green-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Continue
+              {!passed && (
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleRetake}
+                    variant="outline"
+                    className="gap-2 rounded-xl"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Retake Quiz
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
+              {passed && (
+                <p className="text-sm text-green-600">
+                  Task completed! Closing...
+                </p>
+              )}
             </motion.div>
           </CardContent>
         </Card>
