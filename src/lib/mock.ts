@@ -401,9 +401,10 @@ export function completeTask(taskId: string, quizScore?: number, quizAnswers?: n
     existingProgress.completedAt = new Date().toISOString();
     if (quizScore !== undefined) {
       existingProgress.quizResult = {
+        taskId,
         score: quizScore,
         answers: quizAnswers || [],
-        attemptedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
       };
     }
   } else {
@@ -413,9 +414,10 @@ export function completeTask(taskId: string, quizScore?: number, quizAnswers?: n
       completed: true,
       completedAt: new Date().toISOString(),
       quizResult: quizScore !== undefined ? {
+        taskId,
         score: quizScore,
         answers: quizAnswers || [],
-        attemptedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
       } : undefined,
     });
   }
