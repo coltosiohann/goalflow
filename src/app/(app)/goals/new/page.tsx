@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { clientQueries } from "@/lib/supabase/queries";
+import { GeneratingRoadmapModal } from "@/components/GeneratingRoadmapModal";
 
 export default function NewGoalPage() {
   const router = useRouter();
   const [goalTitle, setGoalTitle] = useState("");
   const [timeframe, setTimeframe] = useState([30]);
   const [loading, setLoading] = useState(false);
+  const [showGeneratingModal, setShowGeneratingModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,23 +26,42 @@ export default function NewGoalPage() {
     }
 
     setLoading(true);
+    setShowGeneratingModal(true);
 
     try {
-      // Create the goal in database
-      const goal = await clientQueries.createGoal(goalTitle.trim(), timeframe[0]);
-
-      toast.success("Goal created successfully! 🎉", {
-        duration: 2000,
+      // Call AI to generate roadmap
+      const response = await fetch('/api/generate-roadmap', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          goal: goalTitle.trim(),
+          timeframe_days: timeframe[0],
+        }),
       });
 
-      // Redirect to dashboard
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate roadmap');
+      }
+
+      // Success!
+      setShowGeneratingModal(false);
+      toast.success(`Roadmap created! ${data.tasks_count} tasks generated 🎉`, {
+        duration: 3000,
+      });
+
+      // Redirect to dashboard after a short delay
       setTimeout(() => {
         router.push("/dashboard");
         router.refresh();
-      }, 1000);
+      }, 1500);
     } catch (error) {
-      console.error('Error creating goal:', error);
-      toast.error("Failed to create goal. Please try again.");
+      console.error('Error generating roadmap:', error);
+      setShowGeneratingModal(false);
+      toast.error(error instanceof Error ? error.message : "Failed to generate roadmap. Please try again.");
       setLoading(false);
     }
   };
@@ -177,6 +197,12 @@ export default function NewGoalPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {/* Generating Modal */}
+      <GeneratingRoadmapModal
+        isOpen={showGeneratingModal}
+        goalTitle={goalTitle}
+      />
     </div>
   );
 }
