@@ -105,7 +105,7 @@ export default function DashboardPage() {
                   {activeGoal.title}
                 </div>
                 <p className="mt-1 text-xs text-neutral-600">
-                  {activeGoal.timeframeDays} day challenge
+                  {activeGoal.timeframe_days} day challenge
                 </p>
               </>
             ) : (
@@ -175,12 +175,12 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {todaysTasks.length > 0 ? (
             todaysTasks.map((task) => {
-              const progress = getTaskProgress(task.id);
+              const taskProgress = progress.find((p) => p.task_id === task.id);
               return (
                 <TaskCard
                   key={task.id}
                   task={task}
-                  completed={progress?.completed ?? false}
+                  completed={taskProgress?.completed ?? false}
                   onOpen={() => setSelectedTask(task.id)}
                 />
               );

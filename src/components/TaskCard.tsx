@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle } from "lucide-react";
-import { type Task, type TaskType } from "@/lib/mock";
+import { type Task } from "@/lib/supabase/queries";
+
+type TaskType = 'plan' | 'learn' | 'practice' | 'review';
 
 interface TaskCardProps {
   task: Task;
@@ -53,7 +55,7 @@ export function TaskCard({ task, completed = false, onOpen }: TaskCardProps) {
             </div>
 
             <p className="mb-4 line-clamp-2 text-sm text-neutral-600">
-              {task.shortGuide}
+              {task.short_guide}
             </p>
 
             <Button

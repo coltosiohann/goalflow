@@ -64,7 +64,7 @@ export function TaskDrawer({
 
   const typeStyle = taskTypeColors[task.type];
   const hasQuiz = task.quiz && task.quiz.length > 0;
-  const hasVideo = !!task.videoUrl;
+  const hasVideo = !!task.video_url;
   const quizPassed = quizScore !== null && quizScore >= 80;
   const canComplete = completed || !hasQuiz || quizPassed;
 
@@ -161,7 +161,7 @@ export function TaskDrawer({
                     {typeStyle.label}
                   </Badge>
                   <span className="text-sm text-neutral-500">
-                    Day {task.dayNumber}
+                    Day {task.day_number}
                   </span>
                   {completed && (
                     <Badge className="bg-green-100 text-green-700">
@@ -192,7 +192,7 @@ export function TaskDrawer({
                 </h3>
               </div>
               <p className="leading-relaxed text-neutral-700">
-                {task.shortGuide}
+                {task.short_guide}
               </p>
             </div>
 
@@ -212,7 +212,7 @@ export function TaskDrawer({
                   <div className="relative" style={{ paddingBottom: "56.25%" }}>
                     <iframe
                       className="absolute inset-0 h-full w-full"
-                      src={task.videoUrl}
+                      src={task.video_url || ''}
                       title={task.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen

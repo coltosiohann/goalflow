@@ -1,28 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { mockTasks, getTaskProgress } from "@/lib/mock";
+import { clientQueries, type Task, type Progress } from "@/lib/supabase/queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export default function TestQuizPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get task-7 which has the quiz
-  const task7 = mockTasks.find((t) => t.id === "task-7");
-  const selectedTask = mockTasks.find((t) => t.id === selectedTaskId);
+  // Fetch tasks on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const activeGoal = await clientQueries.getActiveGoal();
+        if (activeGoal) {
+          const goalTasks = await clientQueries.getTasks(activeGoal.id);
+          setTasks(goalTasks);
+        }
+        const userProgress = await clientQueries.getProgress();
+        setProgress(userProgress);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load tasks');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
   const isCompleted = selectedTask
-    ? getTaskProgress(selectedTask.id)?.completed ?? false
+    ? progress.find((p) => p.task_id === selectedTask.id)?.completed ?? false
     : false;
 
-  const handleCompleteTask = () => {
+  const handleCompleteTask = async () => {
     toast.success("Task completed! Great work! 🎉");
-    // Force refresh to show updated completion status
-    setRefreshKey(prev => prev + 1);
+    // Refetch progress
+    try {
+      const userProgress = await clientQueries.getProgress();
+      setProgress(userProgress);
+    } catch (error) {
+      console.error('Error refreshing progress:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Find task-7 or any task with a quiz
+  const quizTask = tasks.find((t) => t.quiz && Array.isArray(t.quiz) && t.quiz.length > 0);
 
   return (
     <div className="container mx-auto max-w-2xl space-y-6 py-8">
@@ -37,19 +76,29 @@ export default function TestQuizPage() {
 
       <Card className="rounded-2xl border-2">
         <CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            Task 7: Build a Simple Quiz App
-          </h2>
-          <p className="mb-4 text-sm text-neutral-600">
-            This task has a quiz with 5 questions. You must score 80% or higher
-            to complete it.
-          </p>
-          <Button
-            onClick={() => setSelectedTaskId("task-7")}
-            className="rounded-xl"
-          >
-            Open Task 7 (With Quiz)
-          </Button>
+          {quizTask ? (
+            <>
+              <h2 className="mb-4 text-lg font-semibold text-neutral-900">
+                {quizTask.title}
+              </h2>
+              <p className="mb-4 text-sm text-neutral-600">
+                This task has a quiz with {quizTask.quiz.length} questions. You must score 80% or higher
+                to complete it.
+              </p>
+              <Button
+                onClick={() => setSelectedTaskId(quizTask.id)}
+                className="rounded-xl"
+              >
+                Open Task (With Quiz)
+              </Button>
+            </>
+          ) : (
+            <div className="text-center">
+              <p className="mb-4 text-neutral-600">
+                No tasks with quizzes found. Please add tasks with quizzes to your goal.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
