@@ -129,16 +129,49 @@ DAILY TASK GUIDELINES:
 - Each task should take 15-20 minutes (total 45-80 min/day)
 - Progressive difficulty throughout the journey
 
+ENHANCED LEARNING CONTENT (CRITICAL):
+For each task, provide comprehensive learning material:
+
+1. LEARNING OBJECTIVES (3-5 specific outcomes)
+   - What the learner will be able to DO after completing this task
+   - Make them measurable and actionable
+   - Example: "Create a responsive navigation menu using Flexbox"
+
+2. WHY THIS MATTERS (2-3 sentences)
+   - Real-world context and relevance
+   - How this skill applies to their overall goal
+   - Motivation and connection to bigger picture
+
+3. DETAILED CONTENT (400-600 words)
+   - Step-by-step explanation of concepts
+   - Clear, beginner-friendly language with examples
+   - Break down complex ideas into digestible parts
+   - Include code examples, diagrams descriptions, or scenarios
+   - Explain the "how" and "why" behind each step
+
+4. HANDS-ON EXERCISE (specific challenge)
+   - Practical, self-contained exercise to apply the learning
+   - Clear instructions and expected outcome
+   - Should take 10-15 minutes to complete
+   - Include hints or guidance if needed
+
+5. SUCCESS CRITERIA (3-4 checkpoints)
+   - How learners know they've mastered this task
+   - Observable, testable outcomes
+   - Example: "Your code runs without errors and displays correctly"
+
 QUIZ REQUIREMENTS:
-- 2-3 questions per task
+- 2-3 scenario-based questions per task
 - Multiple choice format with exactly 4 options
 - Include clear explanations for correct answers
 - Test understanding and application, not just facts
+- Base questions on real-world scenarios
 
 RESOURCE SELECTION:
-- 2-4 resources per task
+- 2-4 resources per task with detailed descriptions
 - Prioritize free, high-quality resources
 - Include variety: videos, articles, interactive tools, practice platforms
+- For each resource, explain WHAT it is and WHY it's useful (1-2 sentences)
 - Ensure resources are appropriate for the skill level
 
 OUTPUT FORMAT:
@@ -158,15 +191,28 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
       "day_number": 1,
       "type": "plan",
       "title": "Task title",
-      "short_guide": "Brief description of what to do (2-3 sentences)",
+      "short_guide": "Brief 2-3 sentence overview",
+      "learning_objectives": [
+        "Specific objective 1",
+        "Specific objective 2",
+        "Specific objective 3"
+      ],
+      "why_this_matters": "Real-world context explaining why this task is important and how it connects to the overall goal.",
+      "detailed_content": "Comprehensive 400-600 word explanation with step-by-step instructions, examples, and clear explanations of concepts. Break down complex ideas. Include specific examples relevant to the domain.",
+      "hands_on_exercise": "Specific practical exercise with clear instructions, expected outcome, and any hints needed. Should be completable in 10-15 minutes.",
+      "success_criteria": [
+        "Measurable checkpoint 1",
+        "Measurable checkpoint 2",
+        "Measurable checkpoint 3"
+      ],
       "video_url": "https://youtube.com/watch?v=... or null",
       "quiz": {
         "questions": [
           {
-            "question": "Question text?",
+            "question": "Scenario-based question testing understanding?",
             "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
             "correct": 0,
-            "explanation": "Why this answer is correct"
+            "explanation": "Detailed explanation of why this answer is correct and why others are wrong"
           }
         ]
       },
@@ -174,12 +220,15 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
         {
           "label": "Resource name",
           "url": "https://...",
+          "description": "What this resource is and why it's useful for this task",
           "order_index": 0
         }
       ]
     }
   ]
 }
+
+IMPORTANT: Make the detailed_content truly educational and comprehensive. This is where the actual learning happens. Don't just list concepts - teach them with examples and explanations.
 
 Remember: Return ONLY the JSON object, nothing else.`
 }
@@ -323,7 +372,12 @@ export async function POST(request: NextRequest) {
           title: task.title,
           short_guide: task.short_guide,
           video_url: task.video_url,
-          quiz: task.quiz
+          quiz: task.quiz,
+          learning_objectives: task.learning_objectives || [],
+          why_this_matters: task.why_this_matters || '',
+          detailed_content: task.detailed_content || '',
+          hands_on_exercise: task.hands_on_exercise || '',
+          success_criteria: task.success_criteria || []
         })
         .select()
         .single()
@@ -341,6 +395,7 @@ export async function POST(request: NextRequest) {
           task_id: taskData.id,
           label: r.label,
           url: r.url,
+          description: r.description || '',
           order_index: r.order_index
         }))
 

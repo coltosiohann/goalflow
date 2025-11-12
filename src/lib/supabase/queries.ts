@@ -26,6 +26,7 @@ export type Resource = {
   task_id: string
   label: string
   url: string
+  description?: string
   order_index: number
   created_at: string
 }
@@ -40,6 +41,11 @@ export type Task = {
   short_guide: string
   video_url: string | null
   quiz: any // JSON field
+  learning_objectives?: string[]
+  why_this_matters?: string
+  detailed_content?: string
+  hands_on_exercise?: string
+  success_criteria?: string[]
   created_at: string
   resources?: Resource[] // Optional - fetched separately if needed
 }
@@ -193,8 +199,13 @@ export const clientQueries = {
   async completeTask(taskId: string, quizScore?: number, quizAnswers?: number[]) {
     const supabase = createBrowserClient()
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
     const progressData: any = {
       task_id: taskId,
+      user_id: user.id,
       completed: true,
       completed_at: new Date().toISOString(),
     }

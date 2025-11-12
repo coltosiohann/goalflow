@@ -13,7 +13,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink, X, CheckCircle2, Play, BookOpen, Brain } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  ExternalLink,
+  X,
+  CheckCircle2,
+  Play,
+  BookOpen,
+  Brain,
+  Target,
+  Lightbulb,
+  Code2,
+  CheckSquare
+} from "lucide-react";
 import { clientQueries, type Task } from "@/lib/supabase/queries";
 import { QuizWidget } from "@/components/QuizWidget";
 import confetti from "canvas-confetti";
@@ -183,25 +195,79 @@ export function TaskDrawer({
           </DrawerHeader>
 
           <div className="space-y-6 p-6 pt-0">
-            {/* Learning Guide */}
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-neutral-900">
-                  Learning Guide
-                </h3>
+            {/* Learning Objectives */}
+            {task.learning_objectives && task.learning_objectives.length > 0 && (
+              <div className="rounded-2xl bg-blue-50 p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Target className="h-5 w-5 text-blue-700" />
+                  <h3 className="font-semibold text-blue-900">
+                    What You'll Learn
+                  </h3>
+                </div>
+                <ul className="space-y-2">
+                  {task.learning_objectives.map((objective, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-blue-900">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                      <span>{objective}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="leading-relaxed text-neutral-700">
-                {task.short_guide}
-              </p>
-            </div>
+            )}
+
+            {/* Why This Matters */}
+            {task.why_this_matters && (
+              <div className="rounded-2xl bg-amber-50 p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-amber-700" />
+                  <h3 className="font-semibold text-amber-900">
+                    Why This Matters
+                  </h3>
+                </div>
+                <p className="leading-relaxed text-amber-900">
+                  {task.why_this_matters}
+                </p>
+              </div>
+            )}
+
+            {/* Detailed Learning Content */}
+            {task.detailed_content && (
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    Learn the Concepts
+                  </h3>
+                </div>
+                <div className="prose prose-neutral max-w-none rounded-2xl border-2 border-neutral-200 bg-neutral-50 p-5">
+                  <div className="whitespace-pre-wrap leading-relaxed text-neutral-800">
+                    {task.detailed_content}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fallback to short guide if no detailed content */}
+            {!task.detailed_content && task.short_guide && (
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-neutral-900">
+                    Learning Guide
+                  </h3>
+                </div>
+                <p className="leading-relaxed text-neutral-700">
+                  {task.short_guide}
+                </p>
+              </div>
+            )}
 
             {/* Video Section */}
             {hasVideo && (
               <div>
                 <div className="mb-3 flex items-center gap-2">
                   <Play className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-neutral-900">Watch Video</h3>
+                  <h3 className="font-semibold text-neutral-900">Watch & Learn</h3>
                   {videoWatched && (
                     <Badge className="bg-green-100 text-green-700">
                       Watched
@@ -223,30 +289,85 @@ export function TaskDrawer({
               </div>
             )}
 
-            {/* Resources */}
+            {/* Hands-On Exercise */}
+            {task.hands_on_exercise && (
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-green-700" />
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    Practice Exercise
+                  </h3>
+                </div>
+                <div className="rounded-2xl border-2 border-green-200 bg-green-50 p-5">
+                  <div className="mb-3 rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-800">
+                    🎯 Put your knowledge into practice!
+                  </div>
+                  <div className="whitespace-pre-wrap leading-relaxed text-green-900">
+                    {task.hands_on_exercise}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Resources with Descriptions */}
             {task.resources && task.resources.length > 0 && (
               <div>
                 <div className="mb-3 flex items-center gap-2">
                   <ExternalLink className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-neutral-900">
-                    Resources
+                    Additional Resources
                   </h3>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {task.resources.map((resource, index) => (
                     <a
                       key={index}
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-xl border-2 border-neutral-200 p-3 transition-all hover:border-primary hover:bg-primary/5"
+                      className="block rounded-xl border-2 border-neutral-200 p-4 transition-all hover:border-primary hover:bg-primary/5"
                     >
-                      <span className="text-sm font-medium text-neutral-900">
-                        {resource.label}
-                      </span>
-                      <ExternalLink className="h-4 w-4 text-neutral-400" />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="mb-1 font-medium text-neutral-900">
+                            {resource.label}
+                          </div>
+                          {resource.description && (
+                            <p className="text-sm text-neutral-600">
+                              {resource.description}
+                            </p>
+                          )}
+                        </div>
+                        <ExternalLink className="mt-1 h-4 w-4 flex-shrink-0 text-neutral-400" />
+                      </div>
                     </a>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Success Criteria Checklist */}
+            {task.success_criteria && task.success_criteria.length > 0 && (
+              <div>
+                <Separator className="my-6" />
+                <div className="mb-3 flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-purple-700" />
+                  <h3 className="font-semibold text-neutral-900">
+                    Before You Continue
+                  </h3>
+                </div>
+                <div className="rounded-2xl bg-purple-50 p-5">
+                  <p className="mb-3 text-sm text-purple-800">
+                    Make sure you can check off these items:
+                  </p>
+                  <ul className="space-y-2">
+                    {task.success_criteria.map((criterion, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-purple-900">
+                        <CheckSquare className="mt-0.5 h-4 w-4 flex-shrink-0 text-purple-600" />
+                        <span>{criterion}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}
