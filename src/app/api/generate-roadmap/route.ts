@@ -187,9 +187,9 @@ Remember: Return ONLY the JSON object, nothing else.`
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { goal, timeframe_days, user_id } = body
+    const { goal, timeframe_days } = body
 
-    console.log('[API] Received request:', { goal, timeframe_days, user_id })
+    console.log('[API] Received request:', { goal, timeframe_days })
 
     if (!goal || !timeframe_days) {
       return NextResponse.json(
@@ -197,6 +197,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Get authenticated user
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error('[API] Authentication error:', authError)
+      return NextResponse.json(
+        { error: 'You must be logged in to create goals' },
+        { status: 401 }
+      )
+    }
+
+    console.log('[API] Authenticated user:', user.id)
 
     // Detect domain and build prompts
     const domain = detectDomain(goal)
@@ -245,11 +259,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`AI generation failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`)
     }
 
-    // Create Supabase client
-    console.log('[API] Creating Supabase client...')
-    const supabase = await createClient()
-
-    // 1. Create the goal
+    // 1. Create the goal (supabase client already created for auth)
     console.log('[API] Creating goal in database...')
     const { data: goalData, error: goalError } = await supabase
       .from('goals')
@@ -257,7 +267,7 @@ export async function POST(request: NextRequest) {
         title: goal,
         timeframe_days,
         status: 'active',
-        user_id: user_id || undefined
+        user_id: user.id
       })
       .select()
       .single()
