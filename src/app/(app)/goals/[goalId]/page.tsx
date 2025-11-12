@@ -8,9 +8,21 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskDrawer } from "@/components/TaskDrawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { clientQueries, type Goal, type Milestone, type Task, type Progress } from "@/lib/supabase/queries";
-import { ArrowLeft, Target, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function GoalOverviewPage() {
   const params = useParams();
@@ -70,6 +82,18 @@ export default function GoalOverviewPage() {
   const handleTaskComplete = () => {
     // Refresh data after task completion
     fetchData();
+  };
+
+  const handleDeleteGoal = async () => {
+    try {
+      await clientQueries.deleteGoal(goalId);
+      toast.success("Goal deleted successfully");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting goal:", error);
+      toast.error("Failed to delete goal");
+    }
   };
 
   if (loading) {
@@ -142,6 +166,33 @@ export default function GoalOverviewPage() {
               </span>
             </div>
           </div>
+
+          {/* Delete Button */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="gap-2">
+                <Trash2 className="h-4 w-4" />
+                Delete Goal
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete &quot;{goal.title}&quot; and all associated milestones, tasks, resources, and progress. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteGoal}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <div className="mt-4">

@@ -313,4 +313,17 @@ export const clientQueries = {
     if (error) throw error
     return data as Goal
   },
+
+  // Delete a goal (and all associated data via CASCADE)
+  async deleteGoal(goalId: string) {
+    const supabase = createBrowserClient()
+
+    const { error } = await supabase
+      .from('goals')
+      .delete()
+      .eq('id', goalId)
+
+    if (error) throw error
+    return true
+  },
 }
