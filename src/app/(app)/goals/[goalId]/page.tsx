@@ -1,154 +1,236 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ProgressBar";
-import {
-  mockGoals,
-  mockMilestones,
-  mockTasks,
-  getMilestoneProgress,
-  getGoalProgress,
-} from "@/lib/mock";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { TaskCard } from "@/components/TaskCard";
+import { TaskDrawer } from "@/components/TaskDrawer";
+import { clientQueries, type Goal, type Milestone, type Task, type Progress } from "@/lib/supabase/queries";
+import { ArrowLeft, Target, Calendar, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function GoalOverviewPage() {
   const params = useParams();
   const router = useRouter();
   const goalId = params.goalId as string;
 
-  const goal = mockGoals.find((g) => g.id === goalId);
-  const milestones = mockMilestones.filter((m) => m.goalId === goalId);
-  const goalProgress = getGoalProgress(goalId);
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [goalProgress, setGoalProgress] = useState(0);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!goal) {
+  useEffect(() => {
+    fetchData();
+  }, [goalId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch goal
+      const goals = await clientQueries.getGoals();
+      const currentGoal = goals.find(g => g.id === goalId);
+
+      if (!currentGoal) {
+        setError("Goal not found");
+        setLoading(false);
+        return;
+      }
+
+      setGoal(currentGoal);
+
+      // Fetch milestones, tasks, and progress
+      const [milestonesData, tasksData, progressData, gProgress] = await Promise.all([
+        clientQueries.getMilestones(goalId),
+        clientQueries.getTasks(goalId),
+        clientQueries.getProgress(),
+        clientQueries.getGoalProgress(goalId),
+      ]);
+
+      setMilestones(milestonesData);
+      setTasks(tasksData);
+      setProgress(progressData);
+      setGoalProgress(gProgress);
+    } catch (err) {
+      console.error("Error fetching goal data:", err);
+      setError("Failed to load goal data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTaskComplete = () => {
+    // Refresh data after task completion
+    fetchData();
+  };
+
+  if (loading) {
     return (
-      <div className="text-center">
-        <p className="text-neutral-600">Goal not found</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+          <p className="mt-2 text-sm text-neutral-600">Loading roadmap...</p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/dashboard")}
-          className="mb-4 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Button>
-
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold text-neutral-900">
-              {goal.title}
-            </h1>
-            <div className="flex items-center gap-3 text-sm text-neutral-600">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {goal.timeframeDays} days
-              </span>
-              <Badge
-                variant="secondary"
-                className="capitalize"
-              >
-                {goal.status}
-              </Badge>
-            </div>
-          </div>
-          <Button onClick={() => router.push("/dashboard")}>
-            View Today
-          </Button>
-        </div>
-
-        {/* Overall Progress */}
-        <Card className="rounded-2xl border-2">
-          <CardContent className="p-6">
-            <ProgressBar
-              label="Overall Progress"
-              value={goalProgress}
-              showPercentage
-            />
+  if (error || !goal) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="mb-2 text-xl font-bold text-neutral-900">
+              {error || "Goal not found"}
+            </h2>
+            <p className="mb-4 text-sm text-neutral-600">
+              This goal doesn&apos;t exist or you don&apos;t have access to it.
+            </p>
+            <Link href="/dashboard">
+              <Button>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
+    );
+  }
 
-      {/* Milestones */}
+  // Calculate current day
+  const startDate = new Date(goal.created_at);
+  const today = new Date();
+  const diffTime = Math.abs(today.getTime() - startDate.getTime());
+  const currentDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const dayNumber = Math.min(currentDay, goal.timeframe_days);
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h2 className="mb-4 text-2xl font-bold text-neutral-900">
-          Learning Roadmap
-        </h2>
+        <Link
+          href="/dashboard"
+          className="mb-4 inline-flex items-center text-sm font-medium text-neutral-600 hover:text-primary"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Link>
 
-        <div className="space-y-4">
-          {milestones.map((milestone, index) => {
-            const progress = getMilestoneProgress(milestone.id);
-            const milestoneTasks = mockTasks.filter(
-              (t) => t.milestoneId === milestone.id
-            );
-            const isCompleted = progress === 100;
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-neutral-900">{goal.title}</h1>
+              <Badge variant="default">{goal.status}</Badge>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-neutral-600">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                Day {dayNumber} of {goal.timeframe_days}
+              </span>
+              <span className="flex items-center gap-1">
+                <Target className="h-4 w-4" />
+                {goalProgress}% Complete
+              </span>
+            </div>
+          </div>
+        </div>
 
-            return (
-              <Card
-                key={milestone.id}
-                className="rounded-2xl border-2 transition-all hover:border-primary/50"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge variant="outline" className="font-mono text-xs">
-                          Days {milestone.dayStart}-{milestone.dayEnd}
-                        </Badge>
-                        {isCompleted && (
-                          <Badge className="bg-green-100 text-green-700">
-                            Completed
-                          </Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-xl">
-                        {index + 1}. {milestone.title}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <ProgressBar
-                    label={`${milestoneTasks.length} tasks`}
-                    value={progress}
-                    showPercentage
-                  />
-
-                  {/* Task list preview */}
-                  <div className="space-y-2">
-                    {milestoneTasks.slice(0, 3).map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center gap-2 text-sm text-neutral-600"
-                      >
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        <span>Day {task.dayNumber}: {task.title}</span>
-                      </div>
-                    ))}
-                    {milestoneTasks.length > 3 && (
-                      <div className="text-xs text-neutral-500">
-                        +{milestoneTasks.length - 3} more tasks
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="mt-4">
+          <ProgressBar label="Overall Progress" value={goalProgress} showPercentage />
         </div>
       </div>
+
+      {/* Milestones and Tasks */}
+      <div className="space-y-6">
+        {milestones.map((milestone) => {
+          const milestoneTasks = tasks.filter((t) => t.milestone_id === milestone.id);
+          const completedCount = milestoneTasks.filter((t) =>
+            progress.some((p) => p.task_id === t.id && p.completed)
+          ).length;
+          const milestoneProgress = milestoneTasks.length > 0
+            ? Math.round((completedCount / milestoneTasks.length) * 100)
+            : 0;
+
+          return (
+            <Card key={milestone.id} className="rounded-2xl border-2">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-xl">{milestone.title}</CardTitle>
+                    <p className="mt-1 text-sm text-neutral-600">
+                      Days {milestone.day_start} - {milestone.day_end}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="ml-4">
+                    {completedCount}/{milestoneTasks.length} tasks
+                  </Badge>
+                </div>
+                <div className="mt-3">
+                  <ProgressBar
+                    label={`${completedCount} of ${milestoneTasks.length} tasks completed`}
+                    value={milestoneProgress}
+                    showPercentage
+                  />
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                <div className="space-y-3">
+                  {milestoneTasks.map((task) => {
+                    const taskProgress = progress.find((p) => p.task_id === task.id);
+                    return (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        completed={taskProgress?.completed ?? false}
+                        onOpen={() => setSelectedTask(task.id)}
+                      />
+                    );
+                  })}
+
+                  {milestoneTasks.length === 0 && (
+                    <p className="py-8 text-center text-sm text-neutral-500">
+                      No tasks in this milestone
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {milestones.length === 0 && (
+          <Card className="rounded-2xl border-2">
+            <CardContent className="py-12 text-center">
+              <p className="text-neutral-500">
+                No milestones found for this goal
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Task Drawer */}
+      {selectedTask && (
+        <TaskDrawer
+          task={tasks.find(t => t.id === selectedTask) ?? null}
+          completed={progress.some(p => p.task_id === selectedTask && p.completed)}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedTask(null);
+          }}
+          onComplete={handleTaskComplete}
+        />
+      )}
     </div>
   );
 }
