@@ -1,5 +1,4 @@
 import { createClient as createBrowserClient } from '@/lib/supabase/client'
-import { createClient as createServerClient } from '@/lib/supabase/server'
 
 // Types (matching our database schema)
 export type Goal = {
@@ -300,33 +299,4 @@ export const clientQueries = {
     if (error) throw error
     return data as Goal
   },
-}
-
-// Server-side queries (use in server components and API routes)
-export const serverQueries = {
-  // Same functions but using server client
-  async getGoals() {
-    const supabase = await createServerClient()
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-    return data as Goal[]
-  },
-
-  async getActiveGoal() {
-    const supabase = await createServerClient()
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('status', 'active')
-      .single()
-
-    if (error && error.code !== 'PGRST116') throw error
-    return data as Goal | null
-  },
-
-  // Add more server functions as needed...
 }
