@@ -189,6 +189,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { goal, timeframe_days, user_id } = body
 
+    console.log('[API] Received request:', { goal, timeframe_days, user_id })
+
     if (!goal || !timeframe_days) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -201,32 +203,54 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildSystemPrompt(domain)
     const userPrompt = buildUserPrompt(goal, timeframe_days)
 
-    console.log(`Generating roadmap for domain: ${domain}`)
+    console.log(`[API] Generating roadmap for domain: ${domain}`)
 
     // Get OpenAI client and call API
-    const openai = getOpenAIClient()
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' }
-    })
+    let roadmap: any
+    try {
+      const openai = getOpenAIClient()
+      console.log('[API] Calling OpenAI API...')
 
-    const responseText = completion.choices[0].message.content
-    if (!responseText) {
-      throw new Error('No response from OpenAI')
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        response_format: { type: 'json_object' }
+      })
+
+      console.log('[API] OpenAI response received')
+
+      const responseText = completion.choices[0].message.content
+      if (!responseText) {
+        throw new Error('No response from OpenAI')
+      }
+
+      console.log('[API] Response length:', responseText.length)
+
+      // Parse the JSON response
+      roadmap = JSON.parse(responseText)
+      console.log('[API] Parsed roadmap:', {
+        milestones: roadmap.milestones?.length || 0,
+        tasks: roadmap.tasks?.length || 0
+      })
+
+      if (!roadmap.milestones || !roadmap.tasks) {
+        throw new Error('Invalid roadmap structure from AI')
+      }
+    } catch (aiError) {
+      console.error('[API] OpenAI Error:', aiError)
+      throw new Error(`AI generation failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`)
     }
 
-    // Parse the JSON response
-    const roadmap = JSON.parse(responseText)
-
     // Create Supabase client
+    console.log('[API] Creating Supabase client...')
     const supabase = await createClient()
 
     // 1. Create the goal
+    console.log('[API] Creating goal in database...')
     const { data: goalData, error: goalError } = await supabase
       .from('goals')
       .insert({
@@ -238,11 +262,16 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (goalError) throw goalError
+    if (goalError) {
+      console.error('[API] Goal creation error:', goalError)
+      throw new Error(`Database error creating goal: ${goalError.message}`)
+    }
 
     const goalId = goalData.id
+    console.log('[API] Goal created with ID:', goalId)
 
     // 2. Create milestones
+    console.log('[API] Creating milestones...')
     const milestonesWithGoalId = roadmap.milestones.map((m: any) => ({
       goal_id: goalId,
       title: m.title,
@@ -256,11 +285,23 @@ export async function POST(request: NextRequest) {
       .insert(milestonesWithGoalId)
       .select()
 
-    if (milestonesError) throw milestonesError
+    if (milestonesError) {
+      console.error('[API] Milestones creation error:', milestonesError)
+      throw new Error(`Database error creating milestones: ${milestonesError.message}`)
+    }
+
+    console.log('[API] Created', milestonesData.length, 'milestones')
 
     // 3. Create tasks with resources
+    console.log('[API] Creating tasks...')
+    let tasksCreated = 0
     for (const task of roadmap.tasks) {
       const milestone = milestonesData[task.milestone_index]
+
+      if (!milestone) {
+        console.error('[API] Invalid milestone_index:', task.milestone_index)
+        continue
+      }
 
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
@@ -277,7 +318,12 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      if (taskError) throw taskError
+      if (taskError) {
+        console.error('[API] Task creation error:', taskError)
+        throw new Error(`Database error creating task: ${taskError.message}`)
+      }
+
+      tasksCreated++
 
       // Add resources for this task
       if (task.resources && task.resources.length > 0) {
@@ -293,11 +339,14 @@ export async function POST(request: NextRequest) {
           .insert(resourcesWithTaskId)
 
         if (resourcesError) {
-          console.error('Error inserting resources:', resourcesError)
+          console.error('[API] Resources error:', resourcesError)
           // Continue anyway - resources are not critical
         }
       }
     }
+
+    console.log('[API] Created', tasksCreated, 'tasks')
+    console.log('[API] ✅ Roadmap generation complete!')
 
     return NextResponse.json({
       success: true,
@@ -308,9 +357,19 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error generating roadmap:', error)
+    console.error('[API] ❌ Error generating roadmap:', error)
+
+    // Return detailed error message
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate roadmap'
+    const errorStack = error instanceof Error ? error.stack : undefined
+
+    console.error('[API] Error details:', { message: errorMessage, stack: errorStack })
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate roadmap' },
+      {
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? errorStack : undefined
+      },
       { status: 500 }
     )
   }

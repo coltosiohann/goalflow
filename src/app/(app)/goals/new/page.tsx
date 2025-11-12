@@ -44,10 +44,16 @@ export default function NewGoalPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate roadmap');
+        const errorMsg = data.error || 'Failed to generate roadmap';
+        console.error('API Error:', errorMsg);
+        if (data.details) {
+          console.error('Error details:', data.details);
+        }
+        throw new Error(errorMsg);
       }
 
       // Success!
+      console.log('Roadmap generated successfully:', data);
       setShowGeneratingModal(false);
       toast.success(`Roadmap created! ${data.tasks_count} tasks generated 🎉`, {
         duration: 3000,
@@ -59,9 +65,15 @@ export default function NewGoalPage() {
         router.refresh();
       }, 1500);
     } catch (error) {
-      console.error('Error generating roadmap:', error);
+      console.error('Client error generating roadmap:', error);
       setShowGeneratingModal(false);
-      toast.error(error instanceof Error ? error.message : "Failed to generate roadmap. Please try again.");
+
+      // Show detailed error message
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate roadmap. Please try again.";
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
+
       setLoading(false);
     }
   };
