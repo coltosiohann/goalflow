@@ -6,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { clientQueries } from "@/lib/supabase/queries";
 
 export default function NewGoalPage() {
   const router = useRouter();
   const [goalTitle, setGoalTitle] = useState("");
   const [timeframe, setTimeframe] = useState([30]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!goalTitle.trim()) {
@@ -22,15 +24,26 @@ export default function NewGoalPage() {
       return;
     }
 
-    // Mock: In real app, this would create a goal via API
-    toast.success("Goal created! Generating your roadmap...", {
-      duration: 2000,
-    });
+    setLoading(true);
 
-    // Redirect to dashboard after a brief delay
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 2000);
+    try {
+      // Create the goal in database
+      const goal = await clientQueries.createGoal(goalTitle.trim(), timeframe[0]);
+
+      toast.success("Goal created successfully! 🎉", {
+        duration: 2000,
+      });
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+        router.refresh();
+      }, 1000);
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      toast.error("Failed to create goal. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,11 +127,21 @@ export default function NewGoalPage() {
             {/* Submit Button */}
             <Button
               type="submit"
+              disabled={loading}
               className="group h-12 w-full gap-2 rounded-xl text-base font-semibold"
             >
-              <Sparkles className="h-5 w-5" />
-              Generate Roadmap
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Creating Goal...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  Create Goal
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
             </Button>
           </form>
         </CardContent>
