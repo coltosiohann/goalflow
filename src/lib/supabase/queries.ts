@@ -70,17 +70,31 @@ export const clientQueries = {
     return data as Goal[]
   },
 
-  // Get active goal
+  // Get active goals (all of them)
+  async getActiveGoals() {
+    const supabase = createBrowserClient()
+    const { data, error } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data as Goal[]
+  },
+
+  // Get the most recent active goal (for backward compatibility)
   async getActiveGoal() {
     const supabase = createBrowserClient()
     const { data, error } = await supabase
       .from('goals')
       .select('*')
       .eq('status', 'active')
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
-    return data as Goal | null
+    if (error) throw error
+    return data && data.length > 0 ? (data[0] as Goal) : null
   },
 
   // Get milestones for a goal

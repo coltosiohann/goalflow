@@ -8,37 +8,66 @@ import { TaskCard } from "@/components/TaskCard";
 import { TaskDrawer } from "@/components/TaskDrawer";
 import { ProgressBar } from "@/components/ProgressBar";
 import { EmptyState } from "@/components/EmptyState";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { clientQueries, type Goal, type Task, type Progress } from "@/lib/supabase/queries";
-import { Target, Flame, Calendar, Loader2 } from "lucide-react";
+import { Target, Flame, Calendar, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [activeGoal, setActiveGoal] = useState<Goal | null>(null);
+  const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [todaysTasks, setTodaysTasks] = useState<Task[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
   const [goalProgress, setGoalProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch data
-  const fetchData = async () => {
+  // Get the currently selected goal
+  const activeGoal = activeGoals.find(g => g.id === selectedGoalId) || null;
+
+  // Fetch all goals
+  const fetchGoals = async () => {
+    try {
+      const goals = await clientQueries.getActiveGoals();
+      setActiveGoals(goals);
+
+      // Auto-select the first goal if none selected, or restore from localStorage
+      if (goals.length > 0) {
+        const savedGoalId = localStorage.getItem('selectedGoalId');
+        const goalExists = savedGoalId && goals.some(g => g.id === savedGoalId);
+
+        if (goalExists) {
+          setSelectedGoalId(savedGoalId);
+        } else {
+          setSelectedGoalId(goals[0].id);
+          localStorage.setItem('selectedGoalId', goals[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      toast.error('Failed to load goals');
+    }
+  };
+
+  // Fetch data for the selected goal
+  const fetchGoalData = async (goalId: string) => {
     try {
       setLoading(true);
 
-      // Get active goal
-      const goal = await clientQueries.getActiveGoal();
-      setActiveGoal(goal);
+      // Get today's tasks
+      const tasks = await clientQueries.getTodaysTasks(goalId);
+      setTodaysTasks(tasks);
 
-      if (goal) {
-        // Get today's tasks
-        const tasks = await clientQueries.getTodaysTasks(goal.id);
-        setTodaysTasks(tasks);
-
-        // Get goal progress
-        const gProgress = await clientQueries.getGoalProgress(goal.id);
-        setGoalProgress(gProgress);
-      }
+      // Get goal progress
+      const gProgress = await clientQueries.getGoalProgress(goalId);
+      setGoalProgress(gProgress);
 
       // Get user progress
       const userProgress = await clientQueries.getProgress();
@@ -55,14 +84,24 @@ export default function DashboardPage() {
     }
   };
 
+  // Initial load
   useEffect(() => {
-    fetchData();
+    fetchGoals();
   }, []);
+
+  // Load data when goal changes
+  useEffect(() => {
+    if (selectedGoalId) {
+      fetchGoalData(selectedGoalId);
+    }
+  }, [selectedGoalId]);
 
   const handleCompleteTask = async () => {
     toast.success("Task completed! Great work! 🎉");
     // Refresh data
-    await fetchData();
+    if (selectedGoalId) {
+      await fetchGoalData(selectedGoalId);
+    }
   };
 
   const currentTask = todaysTasks.find((t) => t.id === selectedTask);
@@ -92,24 +131,68 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Active Goal */}
+        {/* Active Goal with Selector */}
         <Card className="rounded-2xl border-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Goal</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {activeGoals.length > 1 ? 'Your Goals' : 'Active Goal'}
+            </CardTitle>
             <Target className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            {activeGoal ? (
+            {activeGoals.length > 0 ? (
               <>
-                <div className="text-2xl font-bold text-neutral-900">
-                  {activeGoal.title}
-                </div>
-                <p className="mt-1 text-xs text-neutral-600">
-                  {activeGoal.timeframe_days} day challenge
-                </p>
+                {activeGoals.length > 1 ? (
+                  <Select
+                    value={selectedGoalId || ''}
+                    onValueChange={(value) => {
+                      setSelectedGoalId(value);
+                      localStorage.setItem('selectedGoalId', value);
+                    }}
+                  >
+                    <SelectTrigger className="mb-2 h-auto border-none p-0 shadow-none hover:bg-transparent">
+                      <SelectValue>
+                        <div className="text-left">
+                          <div className="text-xl font-bold text-neutral-900">
+                            {activeGoal?.title || 'Select a goal'}
+                          </div>
+                          <p className="mt-1 text-xs text-neutral-600">
+                            {activeGoal?.timeframe_days} day challenge
+                          </p>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activeGoals.map((goal) => (
+                        <SelectItem key={goal.id} value={goal.id}>
+                          <div>
+                            <div className="font-medium">{goal.title}</div>
+                            <div className="text-xs text-neutral-500">
+                              {goal.timeframe_days} days
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-neutral-900">
+                      {activeGoal?.title}
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-600">
+                      {activeGoal?.timeframe_days} day challenge
+                    </p>
+                  </>
+                )}
+                {activeGoals.length > 1 && (
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    {activeGoals.length} active goals
+                  </Badge>
+                )}
               </>
             ) : (
-              <div className="text-sm text-neutral-600">No active goal</div>
+              <div className="text-sm text-neutral-600">No active goals</div>
             )}
           </CardContent>
         </Card>
