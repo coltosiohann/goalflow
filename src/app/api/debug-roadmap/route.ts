@@ -43,12 +43,20 @@ ROADMAP STRUCTURE:
 - Distribute ${timeframe_days} days across milestones proportionally
 
 DAILY TASK GUIDELINES (CRITICAL - MUST FOLLOW):
-- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY (days 1 through ${timeframe_days})
+- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY from day 1 through day ${timeframe_days}
+- DO NOT SKIP ANY DAYS - every day from 1 to ${timeframe_days} must have tasks
+- Distribute tasks across ALL milestones (not just the first one)
 - Mix of types: plan, learn, practice, review
 - Each task should take 15-20 minutes (total 45-80 min/day)
 - Progressive difficulty throughout the journey
-- IMPORTANT: For a ${timeframe_days}-day roadmap, you should generate ${timeframe_days * 3} to ${timeframe_days * 4} total tasks
-- Example: 7-day roadmap = 21-28 tasks total, 14-day roadmap = 42-56 tasks total
+- TOTAL TASKS REQUIRED: ${timeframe_days * 3} to ${timeframe_days * 4} tasks
+- Example for ${timeframe_days} days:
+  * Day 1: 3-4 tasks
+  * Day 2: 3-4 tasks
+  * Day 3: 3-4 tasks
+  * ... continue for EVERY day ...
+  * Day ${timeframe_days}: 3-4 tasks
+  * TOTAL: ${timeframe_days * 3}-${timeframe_days * 4} tasks
 
 OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
@@ -97,10 +105,15 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
 }
 
 VALIDATION CHECKLIST BEFORE RESPONDING:
-✓ Did you create tasks for EVERY day (1 through ${timeframe_days})?
-✓ Does each day have 3-4 tasks?
+✓ Did you create tasks for EVERY SINGLE day from day 1 to day ${timeframe_days}?
+✓ Does each day have 3-4 tasks (check day 1, day 2, ... day ${timeframe_days})?
+✓ Are tasks distributed across ALL milestones (not just the first milestone)?
 ✓ Total task count = ${timeframe_days * 3} to ${timeframe_days * 4} tasks?
 ✓ Mix of task types (plan, learn, practice, review)?
+✓ No days are skipped or missing tasks?
+
+Count your tasks: you should have approximately ${Math.floor(timeframe_days * 3.5)} tasks total.
+If you have less than ${timeframe_days * 3} tasks, you MUST add more tasks to cover all ${timeframe_days} days.
 
 If any answer is NO, revise your roadmap before returning it.
 

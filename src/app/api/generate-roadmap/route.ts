@@ -125,12 +125,20 @@ ROADMAP STRUCTURE:
 - Distribute ${timeframeDays} days across milestones proportionally
 
 DAILY TASK GUIDELINES (CRITICAL - MUST FOLLOW):
-- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY (days 1 through ${timeframeDays})
+- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY from day 1 through day ${timeframeDays}
+- DO NOT SKIP ANY DAYS - every day from 1 to ${timeframeDays} must have tasks
+- Distribute tasks across ALL milestones (not just the first one)
 - Mix of types: plan, learn, practice, review
 - Each task should take 15-20 minutes (total 45-80 min/day)
 - Progressive difficulty throughout the journey
-- IMPORTANT: For a ${timeframeDays}-day roadmap, you should generate ${timeframeDays * 3} to ${timeframeDays * 4} total tasks
-- Example: 7-day roadmap = 21-28 tasks total, 14-day roadmap = 42-56 tasks total
+- TOTAL TASKS REQUIRED: ${timeframeDays * 3} to ${timeframeDays * 4} tasks
+- Example for ${timeframeDays} days:
+  * Day 1: 3-4 tasks
+  * Day 2: 3-4 tasks
+  * Day 3: 3-4 tasks
+  * ... continue for EVERY day ...
+  * Day ${timeframeDays}: 3-4 tasks
+  * TOTAL: ${timeframeDays * 3}-${timeframeDays * 4} tasks
 
 ENHANCED LEARNING CONTENT (CRITICAL):
 For each task, provide comprehensive learning material:
@@ -234,10 +242,15 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
 IMPORTANT: Make the detailed_content truly educational and comprehensive. This is where the actual learning happens. Don't just list concepts - teach them with examples and explanations.
 
 VALIDATION CHECKLIST BEFORE RESPONDING:
-✓ Did you create tasks for EVERY day (1 through ${timeframeDays})?
-✓ Does each day have 3-4 tasks?
+✓ Did you create tasks for EVERY SINGLE day from day 1 to day ${timeframeDays}?
+✓ Does each day have 3-4 tasks (check day 1, day 2, ... day ${timeframeDays})?
+✓ Are tasks distributed across ALL milestones (not just the first milestone)?
 ✓ Total task count = ${timeframeDays * 3} to ${timeframeDays * 4} tasks?
 ✓ Mix of task types (plan, learn, practice, review)?
+✓ No days are skipped or missing tasks?
+
+Count your tasks: you should have approximately ${Math.floor(timeframeDays * 3.5)} tasks total.
+If you have less than ${timeframeDays * 3} tasks, you MUST add more tasks to cover all ${timeframeDays} days.
 
 If any answer is NO, revise your roadmap before returning it.
 
