@@ -352,62 +352,85 @@ export async function POST(request: NextRequest) {
     console.log('[API] Created', milestonesData.length, 'milestones')
 
     // 3. Create tasks with resources
-    console.log('[API] Creating tasks...')
+    console.log('[API] Creating tasks...', roadmap.tasks.length, 'tasks to create')
     let tasksCreated = 0
-    for (const task of roadmap.tasks) {
+    const taskErrors: any[] = []
+
+    for (let i = 0; i < roadmap.tasks.length; i++) {
+      const task = roadmap.tasks[i]
+      console.log(`[API] Creating task ${i + 1}/${roadmap.tasks.length}: ${task.title}`)
+
       const milestone = milestonesData[task.milestone_index]
 
       if (!milestone) {
-        console.error('[API] Invalid milestone_index:', task.milestone_index)
+        console.error('[API] Invalid milestone_index:', task.milestone_index, 'for task:', task.title)
+        taskErrors.push({ task: task.title, error: 'Invalid milestone_index' })
         continue
       }
 
-      const { data: taskData, error: taskError } = await supabase
-        .from('tasks')
-        .insert({
-          goal_id: goalId,
-          milestone_id: milestone.id,
-          day_number: task.day_number,
-          type: task.type,
-          title: task.title,
-          short_guide: task.short_guide,
-          video_url: task.video_url,
-          quiz: task.quiz,
-          learning_objectives: task.learning_objectives || [],
-          why_this_matters: task.why_this_matters || '',
-          detailed_content: task.detailed_content || '',
-          hands_on_exercise: task.hands_on_exercise || '',
-          success_criteria: task.success_criteria || []
-        })
-        .select()
-        .single()
+      try {
+        const { data: taskData, error: taskError } = await supabase
+          .from('tasks')
+          .insert({
+            goal_id: goalId,
+            milestone_id: milestone.id,
+            day_number: task.day_number,
+            type: task.type,
+            title: task.title,
+            short_guide: task.short_guide,
+            video_url: task.video_url,
+            quiz: task.quiz,
+            learning_objectives: task.learning_objectives || [],
+            why_this_matters: task.why_this_matters || '',
+            detailed_content: task.detailed_content || '',
+            hands_on_exercise: task.hands_on_exercise || '',
+            success_criteria: task.success_criteria || []
+          })
+          .select()
+          .single()
 
-      if (taskError) {
-        console.error('[API] Task creation error:', taskError)
-        throw new Error(`Database error creating task: ${taskError.message}`)
-      }
-
-      tasksCreated++
-
-      // Add resources for this task
-      if (task.resources && task.resources.length > 0) {
-        const resourcesWithTaskId = task.resources.map((r: any) => ({
-          task_id: taskData.id,
-          label: r.label,
-          url: r.url,
-          description: r.description || '',
-          order_index: r.order_index
-        }))
-
-        const { error: resourcesError } = await supabase
-          .from('resources')
-          .insert(resourcesWithTaskId)
-
-        if (resourcesError) {
-          console.error('[API] Resources error:', resourcesError)
-          // Continue anyway - resources are not critical
+        if (taskError) {
+          console.error(`[API] Task ${i + 1} creation error:`, taskError)
+          taskErrors.push({ task: task.title, error: taskError.message })
+          continue // Continue to next task instead of throwing
         }
+
+        console.log(`[API] ✓ Task ${i + 1} created successfully:`, task.title)
+        tasksCreated++
+
+        // Add resources for this task
+        if (task.resources && task.resources.length > 0) {
+          const resourcesWithTaskId = task.resources.map((r: any) => ({
+            task_id: taskData.id,
+            label: r.label,
+            url: r.url,
+            description: r.description || '',
+            order_index: r.order_index
+          }))
+
+          const { error: resourcesError } = await supabase
+            .from('resources')
+            .insert(resourcesWithTaskId)
+
+          if (resourcesError) {
+            console.error(`[API] Resources error for task ${i + 1}:`, resourcesError)
+            // Continue anyway - resources are not critical
+          } else {
+            console.log(`[API] ✓ Added ${task.resources.length} resources for task ${i + 1}`)
+          }
+        }
+      } catch (error) {
+        console.error(`[API] Unexpected error creating task ${i + 1}:`, error)
+        taskErrors.push({
+          task: task.title,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+        // Continue to next task
       }
+    }
+
+    if (taskErrors.length > 0) {
+      console.error('[API] Task creation errors:', taskErrors)
     }
 
     console.log('[API] Created', tasksCreated, 'tasks')
@@ -418,7 +441,10 @@ export async function POST(request: NextRequest) {
       goal_id: goalId,
       domain,
       milestones_count: roadmap.milestones.length,
-      tasks_count: roadmap.tasks.length
+      tasks_count: roadmap.tasks.length,
+      tasks_created: tasksCreated,
+      tasks_failed: taskErrors.length,
+      errors: taskErrors.length > 0 ? taskErrors : undefined
     })
 
   } catch (error) {
