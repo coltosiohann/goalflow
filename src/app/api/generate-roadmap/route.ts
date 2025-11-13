@@ -125,20 +125,26 @@ ROADMAP STRUCTURE:
 - Distribute ${timeframeDays} days across milestones proportionally
 
 DAILY TASK GUIDELINES (CRITICAL - MUST FOLLOW):
-- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY from day 1 through day ${timeframeDays}
-- DO NOT SKIP ANY DAYS - every day from 1 to ${timeframeDays} must have tasks
-- Distribute tasks across ALL milestones (not just the first one)
+⚠️ IMPORTANT: You MUST create exactly 3-4 tasks for EVERY SINGLE DAY from day 1 through day ${timeframeDays}
+⚠️ DO NOT SKIP ANY DAYS - every day from 1 to ${timeframeDays} MUST have 3-4 tasks
+⚠️ Distribute tasks across ALL milestones proportionally based on milestone day ranges
+
+Task Distribution Requirements:
 - Mix of types: plan, learn, practice, review
-- Each task should take 15-20 minutes (total 45-80 min/day)
+- Each task: 15-20 minutes (total 45-80 min/day)
 - Progressive difficulty throughout the journey
 - TOTAL TASKS REQUIRED: ${timeframeDays * 3} to ${timeframeDays * 4} tasks
-- Example for ${timeframeDays} days:
-  * Day 1: 3-4 tasks
-  * Day 2: 3-4 tasks
-  * Day 3: 3-4 tasks
-  * ... continue for EVERY day ...
-  * Day ${timeframeDays}: 3-4 tasks
-  * TOTAL: ${timeframeDays * 3}-${timeframeDays * 4} tasks
+
+Mandatory Task Pattern for ALL ${timeframeDays} days:
+- Day 1: Create 3-4 tasks (one of each type: plan, learn, practice, review)
+- Day 2: Create 3-4 tasks (mix of types)
+- Day 3: Create 3-4 tasks (mix of types)
+- ... [CONTINUE THIS PATTERN FOR ALL DAYS] ...
+- Day ${Math.floor(timeframeDays / 2)}: Create 3-4 tasks (mix of types)
+- ... [CONTINUE THIS PATTERN FOR ALL DAYS] ...
+- Day ${timeframeDays}: Create 3-4 tasks (mix of types)
+
+Expected final count: ${Math.floor(timeframeDays * 3.5)} tasks total (approximately ${Math.floor(timeframeDays * 3.5 / timeframeDays)} tasks per day)
 
 ENHANCED LEARNING CONTENT (CRITICAL):
 For each task, provide comprehensive learning material:
@@ -153,7 +159,7 @@ For each task, provide comprehensive learning material:
    - How this skill applies to their overall goal
    - Motivation and connection to bigger picture
 
-3. DETAILED CONTENT (400-600 words)
+3. DETAILED CONTENT (${timeframeDays <= 14 ? '400-600' : timeframeDays <= 30 ? '300-400' : '200-300'} words)
    - Step-by-step explanation of concepts
    - Clear, beginner-friendly language with examples
    - Break down complex ideas into digestible parts
