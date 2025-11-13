@@ -42,10 +42,13 @@ ROADMAP STRUCTURE:
 - Each milestone should represent a meaningful achievement
 - Distribute ${timeframe_days} days across milestones proportionally
 
-DAILY TASK GUIDELINES:
-- 3-4 tasks per day (mix of plan, learn, practice, review types)
+DAILY TASK GUIDELINES (CRITICAL - MUST FOLLOW):
+- You MUST create exactly 3-4 tasks for EVERY SINGLE DAY (days 1 through ${timeframe_days})
+- Mix of types: plan, learn, practice, review
 - Each task should take 15-20 minutes (total 45-80 min/day)
 - Progressive difficulty throughout the journey
+- IMPORTANT: For a ${timeframe_days}-day roadmap, you should generate ${timeframe_days * 3} to ${timeframe_days * 4} total tasks
+- Example: 7-day roadmap = 21-28 tasks total, 14-day roadmap = 42-56 tasks total
 
 OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
@@ -92,6 +95,14 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
     }
   ]
 }
+
+VALIDATION CHECKLIST BEFORE RESPONDING:
+✓ Did you create tasks for EVERY day (1 through ${timeframe_days})?
+✓ Does each day have 3-4 tasks?
+✓ Total task count = ${timeframe_days * 3} to ${timeframe_days * 4} tasks?
+✓ Mix of task types (plan, learn, practice, review)?
+
+If any answer is NO, revise your roadmap before returning it.
 
 Remember: Return ONLY the JSON object, nothing else.`
 
