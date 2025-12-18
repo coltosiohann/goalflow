@@ -4,9 +4,22 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
+type DebugRoadmapAnalysis = {
+  milestones_count: number
+  tasks_count: number
+  expected_tasks: number
+  tasks_per_day: Record<string, number>
+}
+
+type DebugRoadmapResult = {
+  analysis?: DebugRoadmapAnalysis
+  error?: string
+  [key: string]: unknown
+}
+
 export default function DebugRoadmapPage() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<DebugRoadmapResult | null>(null)
 
   const testRoadmapGeneration = async () => {
     setLoading(true)

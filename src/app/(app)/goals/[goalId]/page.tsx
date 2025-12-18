@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,11 +38,7 @@ export default function GoalOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [goalId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -77,7 +73,11 @@ export default function GoalOverviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [goalId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleTaskComplete = () => {
     // Refresh data after task completion

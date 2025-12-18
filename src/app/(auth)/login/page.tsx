@@ -41,6 +41,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (error) {
+      console.error("Error logging in:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -119,7 +120,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-neutral-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/signup"
               className="font-medium text-primary hover:underline"

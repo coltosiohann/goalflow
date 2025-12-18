@@ -20,13 +20,10 @@ export function GeneratingRoadmapModal({ isOpen, goalTitle }: GeneratingRoadmapM
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    if (!isOpen) {
-      setCurrentStep(0);
-      return;
-    }
+    if (!isOpen) return;
 
-    // Progress through steps
-    const timers: NodeJS.Timeout[] = [];
+    // Progress through steps while modal stays open
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
     let totalTime = 0;
 
     steps.forEach((step, index) => {
@@ -39,6 +36,7 @@ export function GeneratingRoadmapModal({ isOpen, goalTitle }: GeneratingRoadmapM
 
     return () => {
       timers.forEach(timer => clearTimeout(timer));
+      setCurrentStep(0);
     };
   }, [isOpen]);
 

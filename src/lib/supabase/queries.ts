@@ -31,6 +31,15 @@ export type Resource = {
   created_at: string
 }
 
+export type QuizQuestion = {
+  id?: string
+  question: string
+  options: string[]
+  correctAnswer?: number
+  correct?: number
+  explanation?: string
+}
+
 export type Task = {
   id: string
   goal_id: string
@@ -40,7 +49,7 @@ export type Task = {
   title: string
   short_guide: string
   video_url: string | null
-  quiz: any // JSON field
+  quiz: QuizQuestion[] | null
   learning_objectives?: string[]
   why_this_matters?: string
   detailed_content?: string
@@ -57,7 +66,11 @@ export type Progress = {
   completed: boolean
   completed_at: string | null
   notes: string | null
-  quiz_result: any | null
+  quiz_result: {
+    score: number
+    answers: number[]
+    completed_at: string
+  } | null
   created_at: string
   updated_at: string
 }
@@ -203,7 +216,13 @@ export const clientQueries = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    const progressData: any = {
+    const progressData: {
+      task_id: string
+      user_id: string
+      completed: true
+      completed_at: string
+      quiz_result?: Progress['quiz_result']
+    } = {
       task_id: taskId,
       user_id: user.id,
       completed: true,
@@ -286,7 +305,7 @@ export const clientQueries = {
 
     // Simple streak calculation (can be improved)
     let streak = 0
-    let currentDate = new Date()
+    const currentDate = new Date()
     currentDate.setHours(0, 0, 0, 0)
 
     for (const progress of data) {

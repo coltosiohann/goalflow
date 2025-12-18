@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, XCircle, ChevronRight, RotateCcw } from "lucide-react";
-import { type QuizQuestion } from "@/lib/mock";
+import { type QuizQuestion } from "@/lib/supabase/queries";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuizWidgetProps {
@@ -26,7 +25,10 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
   }
 
   const question = questions[currentQuestion];
-  const isCorrect = selectedAnswer === question.correctAnswer;
+  const getCorrectIndex = (quizQuestion: QuizQuestion) =>
+    quizQuestion.correctAnswer ?? quizQuestion.correct ?? 0;
+  const correctIndex = getCorrectIndex(question);
+  const isCorrect = selectedAnswer === correctIndex;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleAnswerSelect = (index: number) => {
@@ -49,7 +51,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
       // Quiz complete
       const finalAnswers = [...userAnswers, selectedAnswer!];
       const score = Math.round(
-        (finalAnswers.filter((ans, idx) => ans === questions[idx].correctAnswer)
+        (finalAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx]))
           .length /
           questions.length) *
           100
@@ -71,7 +73,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
   const finalScore =
     userAnswers.length === questions.length
       ? Math.round(
-          (userAnswers.filter((ans, idx) => ans === questions[idx].correctAnswer)
+          (userAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx]))
             .length /
             questions.length) *
             100
@@ -124,7 +126,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
 
               {/* Breakdown */}
               <div className="mb-6 text-sm text-neutral-600">
-                {userAnswers.filter((ans, idx) => ans === questions[idx].correctAnswer).length} out of {questions.length} correct
+                {userAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx])).length} out of {questions.length} correct
               </div>
 
               {/* Pass requirement */}
@@ -192,7 +194,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
               <div className="space-y-3">
                 {question.options.map((option, index) => {
                   const isSelected = selectedAnswer === index;
-                  const isCorrectAnswer = index === question.correctAnswer;
+                  const isCorrectAnswer = index === correctIndex;
                   const showCorrect = showFeedback && isCorrectAnswer;
                   const showIncorrect = showFeedback && isSelected && !isCorrect;
 

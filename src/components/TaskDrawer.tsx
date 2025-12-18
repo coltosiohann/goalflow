@@ -59,23 +59,24 @@ export function TaskDrawer({
 }: TaskDrawerProps) {
   const [notes, setNotes] = useState("");
   const [quizScore, setQuizScore] = useState<number | null>(null);
-  const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
   const [videoWatched, setVideoWatched] = useState(false);
   const [showingQuiz, setShowingQuiz] = useState(false);
 
   // Reset quiz state when drawer closes
   useEffect(() => {
-    if (!open) {
+    if (!open) return;
+
+    return () => {
       setShowingQuiz(false);
       setQuizScore(null);
-      setQuizAnswers([]);
-    }
+    };
   }, [open]);
 
   if (!task) return null;
 
   const typeStyle = taskTypeColors[task.type];
-  const hasQuiz = task.quiz && task.quiz.length > 0;
+  const quizQuestions = Array.isArray(task.quiz) ? task.quiz : [];
+  const hasQuiz = quizQuestions.length > 0;
   const hasVideo = !!task.video_url;
   const quizPassed = quizScore !== null && quizScore >= 80;
   const canComplete = completed || !hasQuiz || quizPassed;
@@ -113,7 +114,6 @@ export function TaskDrawer({
 
   const handleQuizComplete = async (score: number, answers: number[]) => {
     setQuizScore(score);
-    setQuizAnswers(answers);
 
     if (score >= 80) {
       try {
@@ -200,8 +200,8 @@ export function TaskDrawer({
               <div className="rounded-2xl bg-blue-50 p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <Target className="h-5 w-5 text-blue-700" />
-                  <h3 className="font-semibold text-blue-900">
-                    What You'll Learn
+                    <h3 className="font-semibold text-blue-900">
+                    What You&apos;ll Learn
                   </h3>
                 </div>
                 <ul className="space-y-2">
@@ -397,7 +397,7 @@ export function TaskDrawer({
                   </div>
                 )}
                 <QuizWidget
-                  questions={task.quiz}
+                  questions={quizQuestions}
                   onComplete={handleQuizComplete}
                 />
               </div>
@@ -407,7 +407,7 @@ export function TaskDrawer({
             {hasQuiz && !completed && !quizPassed && quizScore !== null && (
               <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
                 You need to score 80% or higher on the quiz to complete this task.
-                Keep trying - you've got this!
+                Keep trying - you&apos;ve got this!
               </div>
             )}
 
@@ -439,7 +439,7 @@ export function TaskDrawer({
               ) : hasQuiz && !showingQuiz ? (
                 <>
                   <Brain className="h-5 w-5" />
-                  I'm Ready for the Quiz!
+                  I&apos;m Ready for the Quiz!
                 </>
               ) : hasQuiz && showingQuiz && !quizPassed ? (
                 "Complete Quiz to Finish"

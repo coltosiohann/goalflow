@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { clientQueries, type Task, type Progress } from "@/lib/supabase/queries";
+import { clientQueries, type Task, type Progress, type QuizQuestion } from "@/lib/supabase/queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -61,7 +61,10 @@ export default function TestQuizPage() {
   }
 
   // Find task-7 or any task with a quiz
-  const quizTask = tasks.find((t) => t.quiz && Array.isArray(t.quiz) && t.quiz.length > 0);
+  const quizTask = tasks.find(
+    (t): t is Task & { quiz: QuizQuestion[] } =>
+      Array.isArray(t.quiz) && t.quiz.length > 0
+  );
 
   return (
     <div className="container mx-auto max-w-2xl space-y-6 py-8">
@@ -112,7 +115,7 @@ export default function TestQuizPage() {
             <li>Click the button above to open task-7</li>
             <li>Check the console for debug messages</li>
             <li>Scroll down in the drawer to see all sections</li>
-            <li>Look for the "Knowledge Check" section with quiz</li>
+            <li>Look for the &quot;Knowledge Check&quot; section with quiz</li>
           </ol>
         </CardContent>
       </Card>

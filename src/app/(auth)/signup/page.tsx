@@ -53,6 +53,7 @@ export default function SignupPage() {
         router.refresh();
       }
     } catch (error) {
+      console.error("Error creating account:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);

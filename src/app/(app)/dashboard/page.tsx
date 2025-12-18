@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clientQueries, type Goal, type Task, type Progress } from "@/lib/supabase/queries";
-import { Target, Flame, Calendar, Loader2, ChevronDown } from "lucide-react";
+import { Target, Flame, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DashboardPage() {

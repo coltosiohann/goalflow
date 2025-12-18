@@ -2,6 +2,69 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 
+type TaskType = 'plan' | 'learn' | 'practice' | 'review'
+
+type RoadmapResource = {
+  label: string
+  url: string
+  description?: string
+  order_index: number
+}
+
+type RoadmapQuizQuestion = {
+  id?: string
+  question: string
+  options: string[]
+  correct?: number
+  correctAnswer?: number
+  explanation?: string
+}
+
+type RoadmapTask = {
+  milestone_index: number
+  day_number: number
+  type: TaskType
+  title: string
+  short_guide: string
+  learning_objectives: string[]
+  why_this_matters: string
+  detailed_content: string
+  hands_on_exercise: string
+  success_criteria: string[]
+  video_url: string | null
+  quiz?: RoadmapQuizQuestion[] | { questions: RoadmapQuizQuestion[] }
+  resources?: RoadmapResource[]
+}
+
+type RoadmapMilestone = {
+  title: string
+  day_start: number
+  day_end: number
+  order_index: number
+}
+
+type RoadmapResponse = {
+  milestones: RoadmapMilestone[]
+  tasks: RoadmapTask[]
+}
+
+type TaskCreationError = {
+  task: string
+  error: string
+}
+
+const normalizeQuizQuestions = (
+  quiz: RoadmapTask['quiz']
+): RoadmapQuizQuestion[] => {
+  if (!quiz) return []
+  const questions = Array.isArray(quiz) ? quiz : quiz.questions ?? []
+  return questions.map((question, index) => ({
+    ...question,
+    id: question.id ?? `question-${index + 1}`,
+    correctAnswer: question.correctAnswer ?? question.correct ?? 0
+  }))
+}
+
 // Helper to get OpenAI client
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY
@@ -299,7 +362,7 @@ export async function POST(request: NextRequest) {
     console.log(`[API] Generating roadmap for domain: ${domain}`)
 
     // Get OpenAI client and call API
-    let roadmap: any
+    let roadmap: RoadmapResponse
     try {
       const openai = getOpenAIClient()
       console.log('[API] Calling OpenAI API...')
@@ -324,7 +387,7 @@ export async function POST(request: NextRequest) {
       console.log('[API] Response length:', responseText.length)
 
       // Parse the JSON response
-      roadmap = JSON.parse(responseText)
+      roadmap = JSON.parse(responseText) as RoadmapResponse
       console.log('[API] Parsed roadmap:', {
         milestones: roadmap.milestones?.length || 0,
         tasks: roadmap.tasks?.length || 0
@@ -361,7 +424,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Create milestones
     console.log('[API] Creating milestones...')
-    const milestonesWithGoalId = roadmap.milestones.map((m: any) => ({
+    const milestonesWithGoalId = roadmap.milestones.map((m) => ({
       goal_id: goalId,
       title: m.title,
       day_start: m.day_start,
@@ -384,13 +447,14 @@ export async function POST(request: NextRequest) {
     // 3. Create tasks with resources
     console.log('[API] Creating tasks...', roadmap.tasks.length, 'tasks to create')
     let tasksCreated = 0
-    const taskErrors: any[] = []
+    const taskErrors: TaskCreationError[] = []
 
     for (let i = 0; i < roadmap.tasks.length; i++) {
       const task = roadmap.tasks[i]
       console.log(`[API] Creating task ${i + 1}/${roadmap.tasks.length}: ${task.title}`)
 
       const milestone = milestonesData[task.milestone_index]
+      const normalizedQuiz = normalizeQuizQuestions(task.quiz)
 
       if (!milestone) {
         console.error('[API] Invalid milestone_index:', task.milestone_index, 'for task:', task.title)
@@ -409,7 +473,7 @@ export async function POST(request: NextRequest) {
             title: task.title,
             short_guide: task.short_guide,
             video_url: task.video_url,
-            quiz: task.quiz,
+            quiz: normalizedQuiz.length > 0 ? normalizedQuiz : null,
             learning_objectives: task.learning_objectives || [],
             why_this_matters: task.why_this_matters || '',
             detailed_content: task.detailed_content || '',
@@ -430,7 +494,7 @@ export async function POST(request: NextRequest) {
 
         // Add resources for this task
         if (task.resources && task.resources.length > 0) {
-          const resourcesWithTaskId = task.resources.map((r: any) => ({
+          const resourcesWithTaskId = task.resources.map((r) => ({
             task_id: taskData.id,
             label: r.label,
             url: r.url,
