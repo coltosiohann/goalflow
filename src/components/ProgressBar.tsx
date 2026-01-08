@@ -4,15 +4,17 @@ interface ProgressBarProps {
   label: string;
   value: number;
   showPercentage?: boolean;
+  className?: string;
 }
 
 export function ProgressBar({
   label,
   value,
   showPercentage = true,
+  className,
 }: ProgressBarProps) {
   return (
-    <div className="space-y-2">
+    <div className={className ? className : "space-y-2"}>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-neutral-700">{label}</span>
         {showPercentage && (

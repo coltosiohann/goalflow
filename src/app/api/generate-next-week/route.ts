@@ -125,7 +125,7 @@ Rules:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { goal_id } = body
+    const { goal_id, feedback } = body
 
     if (!goal_id) {
       return NextResponse.json(
@@ -191,7 +191,20 @@ export async function POST(request: NextRequest) {
 
     const openai = getOpenAIClient()
     const systemPrompt = buildSystemPrompt()
-    const userPrompt = buildUserPrompt(goal.title, startDay, endDay)
+    const feedbackLines: string[] = []
+    if (feedback?.difficulty) {
+      feedbackLines.push(`Difficulty feedback: ${feedback.difficulty}`)
+    }
+    if (feedback?.time) {
+      feedbackLines.push(`Time feedback: ${feedback.time}`)
+    }
+
+    const feedbackContext =
+      feedbackLines.length > 0
+        ? `\n\nLearner feedback to adjust this week:\n- ${feedbackLines.join('\n- ')}\n`
+        : ''
+
+    const userPrompt = buildUserPrompt(goal.title, startDay, endDay) + feedbackContext
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',

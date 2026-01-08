@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 /* GoalFlow Brand Theme Variables */
 :root {
   /* Brand Colors */
@@ -16,6 +18,10 @@
   /* Spacing & Radius */
   --radius-card: 1.5rem; /* 24px - Super rounded */
   --radius-button: 1rem; /* 16px */
+
+  /* Typography */
+  --font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-accent: "Fraunces", "Times New Roman", serif;
 }
 
 /* Tailwind-compatible CSS Variables (for shadcn/ui) */

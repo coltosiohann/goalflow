@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plus, LayoutDashboard, Target } from "lucide-react";
+import { Plus, LayoutDashboard, Target, User } from "lucide-react";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -56,10 +56,11 @@ export function AppHeader() {
             </Button>
           </Link>
 
-          {/* User avatar placeholder */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold text-white">
-            U
-          </div>
+          <Link href="/account" className="flex items-center">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <User className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

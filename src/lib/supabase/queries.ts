@@ -75,15 +75,42 @@ export type Progress = {
   updated_at: string
 }
 
+type QueryResult<T> = {
+  data: T | null
+  error: { message?: string; code?: string } | null
+}
+
+const isJwtExpired = (error?: { message?: string } | null) =>
+  Boolean(
+    error?.message &&
+    error.message.toLowerCase().includes('jwt') &&
+    error.message.toLowerCase().includes('expired')
+  )
+
+const queryWithAuthRetry = async <T>(
+  query: (supabase: ReturnType<typeof createBrowserClient>) => PromiseLike<QueryResult<T>>
+): Promise<QueryResult<T>> => {
+  const supabase = createBrowserClient()
+  let result = await query(supabase)
+  if (result.error && isJwtExpired(result.error)) {
+    const { error: refreshError } = await supabase.auth.refreshSession()
+    if (!refreshError) {
+      result = await query(supabase)
+    }
+  }
+  return result
+}
+
 // Client-side queries (use in client components)
 export const clientQueries = {
   // Get user's goals
   async getGoals() {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('goals')
+        .select('*')
+        .order('created_at', { ascending: false })
+    )
 
     if (error) throw error
     return data as Goal[]
@@ -91,12 +118,13 @@ export const clientQueries = {
 
   // Get active goals (all of them)
   async getActiveGoals() {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('goals')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+    )
 
     if (error) throw error
     return data as Goal[]
@@ -104,13 +132,14 @@ export const clientQueries = {
 
   // Get the most recent active goal (for backward compatibility)
   async getActiveGoal() {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('goals')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+    )
 
     if (error) throw error
     return data && data.length > 0 ? (data[0] as Goal) : null
@@ -118,12 +147,13 @@ export const clientQueries = {
 
   // Get milestones for a goal
   async getMilestones(goalId: string) {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('milestones')
-      .select('*')
-      .eq('goal_id', goalId)
-      .order('order_index', { ascending: true })
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('milestones')
+        .select('*')
+        .eq('goal_id', goalId)
+        .order('order_index', { ascending: true })
+    )
 
     if (error) throw error
     return data as Milestone[]
@@ -131,12 +161,13 @@ export const clientQueries = {
 
   // Get tasks for a goal
   async getTasks(goalId: string) {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('goal_id', goalId)
-      .order('day_number', { ascending: true })
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('goal_id', goalId)
+        .order('day_number', { ascending: true })
+    )
 
     if (error) throw error
     return data as Task[]
@@ -144,15 +175,17 @@ export const clientQueries = {
 
   // Get today's tasks
   async getTodaysTasks(goalId: string) {
-    const supabase = createBrowserClient()
-
     // Get goal to calculate current day
-    const { data: goal } = await supabase
-      .from('goals')
-      .select('created_at, timeframe_days')
-      .eq('id', goalId)
-      .single()
+    const { data: goal, error: goalError } = await queryWithAuthRetry<{ created_at: string; timeframe_days: number }>(
+      (supabase) =>
+        supabase
+          .from('goals')
+          .select('created_at, timeframe_days')
+          .eq('id', goalId)
+          .single()
+    )
 
+    if (goalError) throw goalError
     if (!goal) return []
 
     const startDate = new Date(goal.created_at)
@@ -161,11 +194,13 @@ export const clientQueries = {
     const currentDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     const dayNumber = Math.min(currentDay, goal.timeframe_days)
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('goal_id', goalId)
-      .eq('day_number', dayNumber)
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('goal_id', goalId)
+        .eq('day_number', dayNumber)
+    )
 
     if (error) throw error
     return data as Task[]
@@ -173,12 +208,13 @@ export const clientQueries = {
 
   // Get resources for a task
   async getResources(taskId: string) {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('resources')
-      .select('*')
-      .eq('task_id', taskId)
-      .order('order_index', { ascending: true })
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('resources')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('order_index', { ascending: true })
+    )
 
     if (error) throw error
     return data as Resource[]
@@ -186,10 +222,11 @@ export const clientQueries = {
 
   // Get user progress for all tasks
   async getProgress() {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('progress')
-      .select('*')
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('progress')
+        .select('*')
+    )
 
     if (error) throw error
     return data as Progress[]
@@ -197,12 +234,13 @@ export const clientQueries = {
 
   // Get progress for a specific task
   async getTaskProgress(taskId: string) {
-    const supabase = createBrowserClient()
-    const { data, error } = await supabase
-      .from('progress')
-      .select('*')
-      .eq('task_id', taskId)
-      .single()
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('progress')
+        .select('*')
+        .eq('task_id', taskId)
+        .single()
+    )
 
     if (error && error.code !== 'PGRST116') throw error
     return data as Progress | null
@@ -213,7 +251,15 @@ export const clientQueries = {
     const supabase = createBrowserClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    let { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError && isJwtExpired(userError)) {
+      const { error: refreshError } = await supabase.auth.refreshSession()
+      if (!refreshError) {
+        const refreshed = await supabase.auth.getUser()
+        user = refreshed.data.user
+        userError = refreshed.error
+      }
+    }
     if (!user) throw new Error('User not authenticated')
 
     const progressData: {
@@ -237,33 +283,39 @@ export const clientQueries = {
       }
     }
 
-    const { data, error } = await supabase
-      .from('progress')
-      .upsert(progressData, { onConflict: 'user_id,task_id' })
-      .select()
-      .single()
+    const { data, error } = await queryWithAuthRetry((client) =>
+      client
+        .from('progress')
+        .upsert(progressData, { onConflict: 'user_id,task_id' })
+        .select()
+        .single()
+    )
 
     if (error) throw error
-    return data as Progress
+    return data as unknown as Progress
   },
 
   // Get goal progress percentage
   async getGoalProgress(goalId: string) {
-    const supabase = createBrowserClient()
+    const { data: tasks, error: tasksError } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('tasks')
+        .select('id')
+        .eq('goal_id', goalId)
+    )
 
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('goal_id', goalId)
-
+    if (tasksError) throw tasksError
     if (!tasks || tasks.length === 0) return 0
 
-    const { data: completedTasks } = await supabase
-      .from('progress')
-      .select('task_id')
-      .eq('completed', true)
-      .in('task_id', tasks.map(t => t.id))
+    const { data: completedTasks, error: completedError } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('progress')
+        .select('task_id')
+        .eq('completed', true)
+        .in('task_id', tasks.map(t => t.id))
+    )
 
+    if (completedError) throw completedError
     if (!completedTasks) return 0
 
     return Math.round((completedTasks.length / tasks.length) * 100)
@@ -271,21 +323,25 @@ export const clientQueries = {
 
   // Get milestone progress percentage
   async getMilestoneProgress(milestoneId: string) {
-    const supabase = createBrowserClient()
+    const { data: tasks, error: tasksError } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('tasks')
+        .select('id')
+        .eq('milestone_id', milestoneId)
+    )
 
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('milestone_id', milestoneId)
-
+    if (tasksError) throw tasksError
     if (!tasks || tasks.length === 0) return 0
 
-    const { data: completedTasks } = await supabase
-      .from('progress')
-      .select('task_id')
-      .eq('completed', true)
-      .in('task_id', tasks.map(t => t.id))
+    const { data: completedTasks, error: completedError } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('progress')
+        .select('task_id')
+        .eq('completed', true)
+        .in('task_id', tasks.map(t => t.id))
+    )
 
+    if (completedError) throw completedError
     if (!completedTasks) return 0
 
     return Math.round((completedTasks.length / tasks.length) * 100)
@@ -293,14 +349,15 @@ export const clientQueries = {
 
   // Calculate streak (consecutive days with completed tasks)
   async getStreak() {
-    const supabase = createBrowserClient()
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('progress')
+        .select('completed_at')
+        .eq('completed', true)
+        .order('completed_at', { ascending: false })
+    )
 
-    const { data } = await supabase
-      .from('progress')
-      .select('completed_at')
-      .eq('completed', true)
-      .order('completed_at', { ascending: false })
-
+    if (error) throw error
     if (!data || data.length === 0) return 0
 
     // Simple streak calculation (can be improved)
@@ -328,30 +385,30 @@ export const clientQueries = {
 
   // Create a new goal
   async createGoal(title: string, timeframeDays: number) {
-    const supabase = createBrowserClient()
-
-    const { data, error } = await supabase
-      .from('goals')
-      .insert({
-        title,
-        timeframe_days: timeframeDays,
-        status: 'active',
-      })
-      .select()
-      .single()
+    const { data, error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('goals')
+        .insert({
+          title,
+          timeframe_days: timeframeDays,
+          status: 'active',
+        })
+        .select()
+        .single()
+    )
 
     if (error) throw error
-    return data as Goal
+    return data as unknown as Goal
   },
 
   // Delete a goal (and all associated data via CASCADE)
   async deleteGoal(goalId: string) {
-    const supabase = createBrowserClient()
-
-    const { error } = await supabase
-      .from('goals')
-      .delete()
-      .eq('id', goalId)
+    const { error } = await queryWithAuthRetry((supabase) =>
+      supabase
+        .from('goals')
+        .delete()
+        .eq('id', goalId)
+    )
 
     if (error) throw error
     return true
