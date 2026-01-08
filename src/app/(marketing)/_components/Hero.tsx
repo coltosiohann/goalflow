@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Zap, Trophy } from "lucide-react";
 
@@ -41,8 +42,21 @@ export function Hero() {
           </Link>
         </div>
 
+        {/* Hero Image / Phones */}
+        <div className="relative mt-16 mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[80px] -z-10" />
+          <Image
+            src="/hero-phones.png"
+            alt="GoalFlow Mobile Interface"
+            width={1200}
+            height={800}
+            priority
+            className="w-full drop-shadow-2xl hover:scale-[1.01] transition-transform duration-700"
+          />
+        </div>
+
         {/* Stats / Social Proof */}
-        <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-3 lg:max-w-3xl lg:mx-auto border-t border-indigo-100/50 pt-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+        <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-3 lg:max-w-3xl lg:mx-auto border-t border-indigo-100/50 pt-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-700">
           <div className="flex flex-col items-center">
             <span className="text-3xl font-bold text-neutral-900">10k+</span>
             <span className="text-sm text-neutral-500">Active Goal Setters</span>
