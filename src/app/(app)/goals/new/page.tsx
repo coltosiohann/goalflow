@@ -45,6 +45,15 @@ export default function NewGoalPage() {
 
       if (!response.ok) {
         const errorMsg = data.error || 'Failed to generate roadmap';
+        if (response.status === 401) {
+          toast.error("Please sign in to create goals.", {
+            duration: 4000,
+          });
+          setShowGeneratingModal(false);
+          setLoading(false);
+          router.push("/login");
+          return;
+        }
         console.error('API Error:', errorMsg);
         if (data.details) {
           console.error('Error details:', data.details);

@@ -37,6 +37,7 @@ export default function GoalOverviewPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingNextWeek, setGeneratingNextWeek] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,7 +69,13 @@ export default function GoalOverviewPage() {
       setProgress(progressData);
       setGoalProgress(gProgress);
     } catch (err) {
-      console.error("Error fetching goal data:", err);
+      const details =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : JSON.stringify(err);
+      console.error("Error fetching goal data:", details);
       setError("Failed to load goal data");
     } finally {
       setLoading(false);
@@ -93,6 +100,32 @@ export default function GoalOverviewPage() {
     } catch (error) {
       console.error("Error deleting goal:", error);
       toast.error("Failed to delete goal");
+    }
+  };
+
+  const handleGenerateNextWeek = async () => {
+    try {
+      setGeneratingNextWeek(true);
+      const response = await fetch("/api/generate-next-week", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal_id: goalId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate next week");
+      }
+      toast.success("Next week generated successfully");
+      await fetchData();
+    } catch (error) {
+      console.error("Error generating next week:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate next week"
+      );
+    } finally {
+      setGeneratingNextWeek(false);
     }
   };
 
@@ -149,7 +182,7 @@ export default function GoalOverviewPage() {
           Back to Dashboard
         </Link>
 
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
               <h1 className="text-3xl font-bold text-neutral-900">{goal.title}</h1>
@@ -167,32 +200,51 @@ export default function GoalOverviewPage() {
             </div>
           </div>
 
-          {/* Delete Button */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="gap-2">
-                <Trash2 className="h-4 w-4" />
-                Delete Goal
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete &quot;{goal.title}&quot; and all associated milestones, tasks, resources, and progress. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteGoal}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleGenerateNextWeek}
+              disabled={generatingNextWeek}
+            >
+              {generatingNextWeek ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Next Week"
+              )}
+            </Button>
+
+            {/* Delete Button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Delete Goal
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete &quot;{goal.title}&quot; and all associated milestones, tasks, resources, and progress. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteGoal}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
         <div className="mt-4">

@@ -14,22 +14,28 @@ interface QuizWidgetProps {
 }
 
 export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
+  const safeQuestions = questions.filter(
+    (q): q is QuizQuestion => Boolean(q)
+  );
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [quizComplete, setQuizComplete] = useState(false);
 
-  if (questions.length === 0) {
+  if (safeQuestions.length === 0) {
     return null; // No quiz for this task
   }
 
-  const question = questions[currentQuestion];
-  const getCorrectIndex = (quizQuestion: QuizQuestion) =>
-    quizQuestion.correctAnswer ?? quizQuestion.correct ?? 0;
+  const question = safeQuestions[currentQuestion];
+  if (!question) {
+    return null;
+  }
+  const getCorrectIndex = (quizQuestion?: QuizQuestion) =>
+    quizQuestion?.correctAnswer ?? quizQuestion?.correct ?? 0;
   const correctIndex = getCorrectIndex(question);
   const isCorrect = selectedAnswer === correctIndex;
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress = ((currentQuestion + 1) / safeQuestions.length) * 100;
 
   const handleAnswerSelect = (index: number) => {
     if (showFeedback) return; // Don't allow changing answer after submission
@@ -43,7 +49,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < safeQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
@@ -51,9 +57,11 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
       // Quiz complete
       const finalAnswers = [...userAnswers, selectedAnswer!];
       const score = Math.round(
-        (finalAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx]))
+        (finalAnswers.filter(
+          (ans, idx) => ans === getCorrectIndex(safeQuestions[idx])
+        )
           .length /
-          questions.length) *
+          safeQuestions.length) *
           100
       );
       setQuizComplete(true);
@@ -71,11 +79,13 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
 
   // Calculate final score for results screen
   const finalScore =
-    userAnswers.length === questions.length
+    userAnswers.length === safeQuestions.length
       ? Math.round(
-          (userAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx]))
+          (userAnswers.filter(
+            (ans, idx) => ans === getCorrectIndex(safeQuestions[idx])
+          )
             .length /
-            questions.length) *
+            safeQuestions.length) *
             100
         )
       : 0;
@@ -126,7 +136,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
 
               {/* Breakdown */}
               <div className="mb-6 text-sm text-neutral-600">
-                {userAnswers.filter((ans, idx) => ans === getCorrectIndex(questions[idx])).length} out of {questions.length} correct
+                {userAnswers.filter((ans, idx) => ans === getCorrectIndex(safeQuestions[idx])).length} out of {safeQuestions.length} correct
               </div>
 
               {/* Pass requirement */}
@@ -167,7 +177,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-neutral-700">
-            Question {currentQuestion + 1} of {questions.length}
+            Question {currentQuestion + 1} of {safeQuestions.length}
           </span>
           <span className="text-neutral-500">{Math.round(progress)}%</span>
         </div>
@@ -192,7 +202,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
 
               {/* Options */}
               <div className="space-y-3">
-                {question.options.map((option, index) => {
+                {question.options?.map((option, index) => {
                   const isSelected = selectedAnswer === index;
                   const isCorrectAnswer = index === correctIndex;
                   const showCorrect = showFeedback && isCorrectAnswer;
@@ -289,7 +299,7 @@ export function QuizWidget({ questions, onComplete }: QuizWidgetProps) {
                     onClick={handleNextQuestion}
                     className="w-full gap-2 rounded-xl"
                   >
-                    {currentQuestion < questions.length - 1
+                    {currentQuestion < safeQuestions.length - 1
                       ? "Next Question"
                       : "See Results"}
                     <ChevronRight className="h-4 w-4" />

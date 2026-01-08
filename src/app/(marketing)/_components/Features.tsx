@@ -8,51 +8,58 @@ import {
   GraduationCap,
   BarChart3,
   Network,
+  Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
   {
     icon: Map,
-    title: "Roadmap Generator",
+    title: "Smart Roadmap Generator",
     description:
-      "AI creates detailed, day-by-day learning paths customized to your goal and timeline.",
+      "Our AI analyzes your goal and creates a precise, day-by-day execution plan tailored to your timeline.",
+    color: "bg-blue-50 text-blue-600",
   },
   {
     icon: Brain,
-    title: "Adaptive Learning",
+    title: "Adaptive Learning Engine",
     description:
-      "Dynamic difficulty adjustment based on your progress and comprehension levels.",
+      "The system learns from your progress, adjusting difficulty and pacing to keep you in the flow state.",
+    color: "bg-purple-50 text-purple-600",
   },
   {
     icon: Bookmark,
-    title: "Curated Resources",
+    title: "Curated Knowledge Base",
     description:
-      "Handpicked tutorials, articles, and videos from trusted sources for each task.",
+      "Stop searching. We provide handpicked, high-quality resources (videos, articles) for every single task.",
+    color: "bg-amber-50 text-amber-600",
   },
   {
     icon: GraduationCap,
-    title: "Flashcards & Quizzes",
+    title: "Interactive Quizzes",
     description:
-      "Reinforce learning with interactive flashcards and knowledge checks.",
+      "Test your understanding with AI-generated quizzes that reinforce key concepts and ensure mastery.",
+    color: "bg-green-50 text-green-600",
   },
   {
     icon: BarChart3,
-    title: "Progress & Streaks",
+    title: "Analytics & Insights",
     description:
-      "Track your journey with detailed analytics, streaks, and milestone celebrations.",
+      "Visualize your journey with detailed charts, streak tracking, and completion forecasts.",
+    color: "bg-rose-50 text-rose-600",
   },
   {
     icon: Network,
-    title: "Cross-Goal Intelligence",
+    title: "Skill Graph",
     description:
-      "Leverage insights from one goal to accelerate learning in related areas.",
+      "See how your goals connect. Leverage existing skills to accelerate learning in new areas.",
+    color: "bg-indigo-50 text-indigo-600",
   },
 ];
 
 export function Features() {
   return (
-    <section className="bg-gradient-to-b from-neutral-50 to-white py-20 md:py-32">
+    <section className="bg-neutral-50/50 py-12 md:py-20 relative z-10">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -61,11 +68,15 @@ export function Features() {
           transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <h2 className="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
-            Everything You Need to Succeed
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+            <Zap className="h-3 w-3" />
+            <span>Power Features</span>
+          </div>
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-neutral-900 md:text-4xl lg:text-5xl">
+            Everything You Need to <span className="text-primary">Succeed</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-neutral-600">
-            Powerful features designed to keep you motivated and on track
+            Don&apos;t just set goals; crush them with a suite of powerful tools designed for high achievers.
           </p>
         </motion.div>
 
@@ -76,20 +87,23 @@ export function Features() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.05, duration: 0.5 }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
             >
-              <Card className="group h-full rounded-2xl border-2 transition-all hover:border-primary/50 hover:shadow-lg">
-                <CardContent className="p-6">
+              <Card className="group relative h-full overflow-hidden border-0 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
+                <CardContent className="p-8">
+                  {/* Decorative Background Blob */}
+                  <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-0 transition-opacity group-hover:opacity-20 ${feature.color.split(' ')[0]}`} />
+                  
                   {/* Icon */}
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 transition-all group-hover:scale-110">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl ${feature.color} transition-transform duration-300 group-hover:scale-110`}>
+                    <feature.icon className="h-7 w-7" />
                   </div>
 
                   {/* Content */}
-                  <h3 className="mb-2 text-lg font-bold text-neutral-900">
+                  <h3 className="mb-3 text-xl font-bold text-neutral-900">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-neutral-600">
+                  <p className="leading-relaxed text-neutral-600">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -101,3 +115,4 @@ export function Features() {
     </section>
   );
 }
+

@@ -53,6 +53,29 @@ type TaskCreationError = {
   error: string
 }
 
+const generateRoadmap = async (
+  openai: OpenAI,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<RoadmapResponse> => {
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    temperature: 0.7,
+    response_format: { type: 'json_object' }
+  })
+
+  const responseText = completion.choices[0].message.content
+  if (!responseText) {
+    throw new Error('No response from OpenAI')
+  }
+
+  return JSON.parse(responseText) as RoadmapResponse
+}
+
 const normalizeQuizQuestions = (
   quiz: RoadmapTask['quiz']
 ): RoadmapQuizQuestion[] => {
@@ -107,12 +130,12 @@ function buildSystemPrompt(domain: string): string {
 IMPORTANT PRINCIPLES:
 - Scale difficulty progressively from beginner to intermediate/advanced
 - Make tasks achievable in 30-60 minutes per day
-- Include a healthy learning rhythm: learn → practice → review
+- Include a healthy learning rhythm: learn -> practice -> review
 - Provide high-quality, free resources when possible
 - Create engaging quiz questions that test understanding, not just memorization
 
-Each day should have 3-4 tasks of different types:
-- PLAN: Overview, goal-setting, or reflection
+Each day should have 1-2 focused tasks:
+- PLAN: Day 1 setup and weekly check-ins
 - LEARN: New concepts, theory, or guided tutorials
 - PRACTICE: Hands-on exercises or real-world application
 - REVIEW: Quiz, recap, or consolidation`
@@ -122,7 +145,7 @@ Each day should have 3-4 tasks of different types:
 DOMAIN: Web Development
 - Focus on hands-on projects and practical coding
 - Include official documentation and interactive platforms (MDN, freeCodeCamp, Scrimba)
-- Build progressively: HTML/CSS → JavaScript → Framework → Backend → Deployment
+- Build progressively: HTML/CSS -> JavaScript -> Framework -> Backend -> Deployment
 - Emphasize real-world project milestones
 - Resources: Official docs, coding challenges, video tutorials, GitHub repos`,
 
@@ -139,7 +162,7 @@ DOMAIN: Language Learning
 - Balance four skills: listening, speaking, reading, writing
 - Start with high-frequency vocabulary and basic grammar
 - Include cultural context and real-life scenarios
-- Gradual progression: basics → conversations → complex topics
+- Gradual progression: basics -> conversations -> complex topics
 - Resources: Language apps (Duolingo, Memrise), podcasts, YouTube channels, conversation practice`,
 
     creative: `
@@ -161,7 +184,7 @@ DOMAIN: Business/Productivity
     data_science: `
 DOMAIN: Data Science
 - Start with programming basics (Python/R)
-- Progress through: data manipulation → visualization → statistics → ML
+- Progress through: data manipulation -> visualization -> statistics -> ML
 - Use real datasets for practice
 - Include Jupyter notebooks and interactive tools
 - Resources: Official docs, Kaggle, DataCamp, research papers`,
@@ -187,27 +210,12 @@ ROADMAP STRUCTURE:
 - Each milestone should represent a meaningful achievement
 - Distribute ${timeframeDays} days across milestones proportionally
 
-DAILY TASK GUIDELINES (CRITICAL - MUST FOLLOW):
-⚠️ IMPORTANT: You MUST create exactly 3-4 tasks for EVERY SINGLE DAY from day 1 through day ${timeframeDays}
-⚠️ DO NOT SKIP ANY DAYS - every day from 1 to ${timeframeDays} MUST have 3-4 tasks
-⚠️ Distribute tasks across ALL milestones proportionally based on milestone day ranges
-
-Task Distribution Requirements:
-- Mix of types: plan, learn, practice, review
-- Each task: 15-20 minutes (total 45-80 min/day)
+DAILY TASK GUIDELINES (IMPORTANT):
+- Aim for 1-2 tasks per day
+- Day 1 should include a PLAN task
+- Use PLAN tasks only on Day 1 and weekly check-ins
+- Keep tasks distinct day-to-day (no repeated titles or copy)
 - Progressive difficulty throughout the journey
-- TOTAL TASKS REQUIRED: ${timeframeDays * 3} to ${timeframeDays * 4} tasks
-
-Mandatory Task Pattern for ALL ${timeframeDays} days:
-- Day 1: Create 3-4 tasks (one of each type: plan, learn, practice, review)
-- Day 2: Create 3-4 tasks (mix of types)
-- Day 3: Create 3-4 tasks (mix of types)
-- ... [CONTINUE THIS PATTERN FOR ALL DAYS] ...
-- Day ${Math.floor(timeframeDays / 2)}: Create 3-4 tasks (mix of types)
-- ... [CONTINUE THIS PATTERN FOR ALL DAYS] ...
-- Day ${timeframeDays}: Create 3-4 tasks (mix of types)
-
-Expected final count: ${Math.floor(timeframeDays * 3.5)} tasks total (approximately ${Math.floor(timeframeDays * 3.5 / timeframeDays)} tasks per day)
 
 ENHANCED LEARNING CONTENT (CRITICAL):
 For each task, provide comprehensive learning material:
@@ -222,7 +230,7 @@ For each task, provide comprehensive learning material:
    - How this skill applies to their overall goal
    - Motivation and connection to bigger picture
 
-3. DETAILED CONTENT (${timeframeDays <= 14 ? '400-600' : timeframeDays <= 30 ? '300-400' : '200-300'} words)
+3. DETAILED CONTENT (${timeframeDays <= 14 ? '200-300' : timeframeDays <= 30 ? '150-220' : '120-180'} words)
    - Step-by-step explanation of concepts
    - Clear, beginner-friendly language with examples
    - Break down complex ideas into digestible parts
@@ -241,17 +249,16 @@ For each task, provide comprehensive learning material:
    - Example: "Your code runs without errors and displays correctly"
 
 QUIZ REQUIREMENTS:
-- 2-3 scenario-based questions per task
+- Include a quiz only for REVIEW tasks
+- 1 scenario-based question per quiz
 - Multiple choice format with exactly 4 options
-- Include clear explanations for correct answers
-- Test understanding and application, not just facts
-- Base questions on real-world scenarios
+- Include a clear explanation for the correct answer
 
 RESOURCE SELECTION:
-- 2-4 resources per task with detailed descriptions
+- 0-2 resources per task with brief descriptions
 - Prioritize free, high-quality resources
-- Include variety: videos, articles, interactive tools, practice platforms
-- For each resource, explain WHAT it is and WHY it's useful (1-2 sentences)
+- Include variety across the week: videos, articles, interactive tools, practice platforms
+- For each resource, explain WHAT it is and WHY it's useful (1 sentence)
 - Ensure resources are appropriate for the skill level
 
 OUTPUT FORMAT:
@@ -310,19 +317,6 @@ Return ONLY valid JSON (no markdown, no explanations) with this exact structure:
 
 IMPORTANT: Make the detailed_content truly educational and comprehensive. This is where the actual learning happens. Don't just list concepts - teach them with examples and explanations.
 
-VALIDATION CHECKLIST BEFORE RESPONDING:
-✓ Did you create tasks for EVERY SINGLE day from day 1 to day ${timeframeDays}?
-✓ Does each day have 3-4 tasks (check day 1, day 2, ... day ${timeframeDays})?
-✓ Are tasks distributed across ALL milestones (not just the first milestone)?
-✓ Total task count = ${timeframeDays * 3} to ${timeframeDays * 4} tasks?
-✓ Mix of task types (plan, learn, practice, review)?
-✓ No days are skipped or missing tasks?
-
-Count your tasks: you should have approximately ${Math.floor(timeframeDays * 3.5)} tasks total.
-If you have less than ${timeframeDays * 3} tasks, you MUST add more tasks to cover all ${timeframeDays} days.
-
-If any answer is NO, revise your roadmap before returning it.
-
 Remember: Return ONLY the JSON object, nothing else.`
 }
 
@@ -367,27 +361,8 @@ export async function POST(request: NextRequest) {
       const openai = getOpenAIClient()
       console.log('[API] Calling OpenAI API...')
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        response_format: { type: 'json_object' }
-      })
+      roadmap = await generateRoadmap(openai, systemPrompt, userPrompt)
 
-      console.log('[API] OpenAI response received')
-
-      const responseText = completion.choices[0].message.content
-      if (!responseText) {
-        throw new Error('No response from OpenAI')
-      }
-
-      console.log('[API] Response length:', responseText.length)
-
-      // Parse the JSON response
-      roadmap = JSON.parse(responseText) as RoadmapResponse
       console.log('[API] Parsed roadmap:', {
         milestones: roadmap.milestones?.length || 0,
         tasks: roadmap.tasks?.length || 0
@@ -489,7 +464,7 @@ export async function POST(request: NextRequest) {
           continue // Continue to next task instead of throwing
         }
 
-        console.log(`[API] ✓ Task ${i + 1} created successfully:`, task.title)
+        console.log(`[API] [OK] Task ${i + 1} created successfully:`, task.title)
         tasksCreated++
 
         // Add resources for this task
@@ -510,7 +485,7 @@ export async function POST(request: NextRequest) {
             console.error(`[API] Resources error for task ${i + 1}:`, resourcesError)
             // Continue anyway - resources are not critical
           } else {
-            console.log(`[API] ✓ Added ${task.resources.length} resources for task ${i + 1}`)
+            console.log(`[API] [OK] Added ${task.resources.length} resources for task ${i + 1}`)
           }
         }
       } catch (error) {
@@ -528,7 +503,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[API] Created', tasksCreated, 'tasks')
-    console.log('[API] ✅ Roadmap generation complete!')
+    console.log('[API] [OK] Roadmap generation complete!')
 
     return NextResponse.json({
       success: true,
@@ -542,7 +517,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('[API] ❌ Error generating roadmap:', error)
+    console.error('[API] [FAIL] Error generating roadmap:', error)
 
     // Return detailed error message
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate roadmap'

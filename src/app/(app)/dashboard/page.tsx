@@ -50,9 +50,25 @@ export default function DashboardPage() {
           localStorage.setItem('selectedGoalId', goals[0].id);
         }
       }
-    } catch (error) {
-      console.error('Error fetching goals:', error);
-      toast.error('Failed to load goals');
+    } catch (error: unknown) {
+      const errorDetails =
+        typeof error === "object" && error !== null
+          ? (error as {
+              message?: string;
+              code?: string;
+              details?: string;
+              hint?: string;
+            })
+          : {};
+      console.error("Error fetching goals:", error);
+      console.error("Error details:", {
+        message:
+          error instanceof Error ? error.message : errorDetails.message,
+        code: errorDetails.code,
+        details: errorDetails.details,
+        hint: errorDetails.hint,
+      });
+      toast.error("Failed to load goals");
     }
   };
 

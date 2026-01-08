@@ -1,17 +1,22 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mockTasks, getTaskProgress, type TaskType } from "@/lib/mock";
-import { ArrowLeft, ExternalLink, CheckCircle2 } from "lucide-react";
+import {
+  clientQueries,
+  type Progress,
+  type Resource,
+  type Task,
+} from "@/lib/supabase/queries";
+import { ArrowLeft, ExternalLink, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const taskTypeColors: Record<
-  TaskType,
+  Task["type"],
   { bg: string; text: string; label: string }
 > = {
   plan: { bg: "bg-blue-100", text: "text-blue-700", label: "Plan" },
@@ -24,13 +29,55 @@ export default function TaskDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const [notes, setNotes] = useState("");
+  const [task, setTask] = useState<Task | null>(null);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const taskId = params.taskId as string;
   const goalId = params.goalId as string;
 
-  const task = mockTasks.find((t) => t.id === taskId);
-  const progress = task ? getTaskProgress(task.id) : null;
+  useEffect(() => {
+    const loadTask = async () => {
+      try {
+        setLoading(true);
+        const tasks = await clientQueries.getTasks(goalId);
+        const foundTask = tasks.find((t) => t.id === taskId) || null;
+        setTask(foundTask);
+
+        if (!foundTask) {
+          setResources([]);
+          setProgress(null);
+          return;
+        }
+
+        const [taskProgress, taskResources] = await Promise.all([
+          clientQueries.getTaskProgress(foundTask.id),
+          clientQueries.getResources(foundTask.id),
+        ]);
+
+        setProgress(taskProgress);
+        setResources(taskResources);
+      } catch (error) {
+        console.error("Failed to load task:", error);
+        toast.error("Failed to load task details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTask();
+  }, [goalId, taskId]);
+
   const isCompleted = progress?.completed ?? false;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!task) {
     return (
@@ -42,11 +89,18 @@ export default function TaskDetailsPage() {
 
   const typeStyle = taskTypeColors[task.type];
 
-  const handleComplete = () => {
-    toast.success("Task completed! Great work! 🎉");
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 1000);
+  const handleComplete = async () => {
+    try {
+      const updated = await clientQueries.completeTask(task.id);
+      setProgress(updated);
+      toast.success("Task completed! Great work!");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (error) {
+      console.error("Failed to complete task:", error);
+      toast.error("Failed to mark task as complete.");
+    }
   };
 
   return (
@@ -68,7 +122,9 @@ export default function TaskDetailsPage() {
           <Badge className={`${typeStyle.bg} ${typeStyle.text} border-0`}>
             {typeStyle.label}
           </Badge>
-          <span className="text-sm text-neutral-500">Day {task.dayNumber}</span>
+          <span className="text-sm text-neutral-500">
+            Day {task.day_number}
+          </span>
           {isCompleted && (
             <Badge className="bg-green-100 text-green-700">Completed</Badge>
           )}
@@ -82,19 +138,19 @@ export default function TaskDetailsPage() {
           <h2 className="mb-3 text-lg font-semibold text-neutral-900">
             Learning Guide
           </h2>
-          <p className="leading-relaxed text-neutral-700">{task.shortGuide}</p>
+          <p className="leading-relaxed text-neutral-700">{task.short_guide}</p>
         </CardContent>
       </Card>
 
       {/* Resources */}
-      {task.resources.length > 0 && (
+      {resources.length > 0 && (
         <Card className="rounded-2xl border-2">
           <CardContent className="p-6">
             <h2 className="mb-4 text-lg font-semibold text-neutral-900">
               Curated Resources
             </h2>
             <div className="space-y-3">
-              {task.resources.map((resource, index) => (
+              {resources.map((resource, index) => (
                 <a
                   key={index}
                   href={resource.url}

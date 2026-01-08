@@ -1,36 +1,39 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Quote, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const testimonials = [
   {
     name: "Sarah Chen",
-    role: "Software Developer",
+    role: "Software Engineer",
     content:
-      "GoalFlow helped me transition into data science in just 90 days. The AI-generated roadmap was perfectly paced and the resources were top-notch!",
+      "I used GoalFlow to transition into React development. The daily roadmap kept me accountable when tutorials alone couldn't. I landed my first job in 3 months!",
     avatar: "SC",
+    color: "bg-emerald-100 text-emerald-700",
   },
   {
     name: "Marcus Johnson",
-    role: "Marketing Manager",
+    role: "Product Manager",
     content:
-      "I finally learned to code thanks to GoalFlow. The daily tasks kept me accountable and the progress tracking was incredibly motivating.",
+      "Finally, a tool that doesn't just list tasks but actually teaches you. The curated resources for each step saved me hours of searching.",
     avatar: "MJ",
+    color: "bg-blue-100 text-blue-700",
   },
   {
     name: "Emily Rodriguez",
-    role: "Freelance Designer",
+    role: "Digital Artist",
     content:
-      "The structured approach made all the difference. I went from zero to fluent in Spanish in 6 months. Highly recommend!",
+      "I wanted to learn 3D modeling but was overwhelmed. GoalFlow broke it down into 45-minute daily chunks. It made the impossible feel manageable.",
     avatar: "ER",
+    color: "bg-purple-100 text-purple-700",
   },
 ];
 
 export function Testimonials() {
   return (
-    <section className="bg-white py-20 md:py-32">
+    <section className="bg-neutral-50 py-16 md:py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -39,11 +42,11 @@ export function Testimonials() {
           transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <h2 className="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
-            Loved by Learners Worldwide
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-neutral-900 md:text-4xl lg:text-5xl">
+            Loved by <span className="text-primary">Achievers</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-neutral-600">
-            Join thousands who have achieved their goals with GoalFlow
+            Join thousands of others who are turning their &quot;one day&quot; into &quot;day one&quot;.
           </p>
         </motion.div>
 
@@ -56,8 +59,11 @@ export function Testimonials() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
-              <Card className="h-full rounded-2xl border-2">
-                <CardContent className="p-6">
+              <Card className="h-full border-0 bg-white shadow-md transition-shadow hover:shadow-xl">
+                <CardContent className="p-8">
+                  {/* Quote Icon */}
+                  <Quote className="mb-6 h-8 w-8 text-primary/20" />
+
                   {/* Stars */}
                   <div className="mb-4 flex gap-1">
                     {[...Array(5)].map((_, i) => (
@@ -68,21 +74,24 @@ export function Testimonials() {
                     ))}
                   </div>
 
-                  {/* Quote */}
-                  <p className="mb-6 text-neutral-700">
+                  {/* Content */}
+                  <p className="mb-8 text-lg leading-relaxed text-neutral-700">
                     &quot;{testimonial.content}&quot;
                   </p>
 
                   {/* Author */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-white">
+                  <div className="flex items-center gap-4 pt-6 border-t border-neutral-100">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${testimonial.color} text-sm font-bold`}>
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <div className="font-semibold text-neutral-900">
-                        {testimonial.name}
+                      <div className="flex items-center gap-2">
+                        <div className="font-bold text-neutral-900">
+                          {testimonial.name}
+                        </div>
+                        <CheckCircle2 className="h-4 w-4 text-blue-500" />
                       </div>
-                      <div className="text-sm text-neutral-600">
+                      <div className="text-sm text-neutral-500">
                         {testimonial.role}
                       </div>
                     </div>

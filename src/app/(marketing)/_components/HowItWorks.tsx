@@ -1,80 +1,85 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Target, Sparkles, TrendingUp } from "lucide-react";
+import { Target, Sparkles, TrendingUp, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const steps = [
   {
     icon: Target,
-    title: "Set Your Goal",
+    title: "1. Set Your Goal",
     description:
-      "Tell us what you want to achieve and your timeframe. From learning a new language to mastering a skill.",
+      "Define your ambition and available timeframe. Whether it's learning Spanish in 30 days or mastering Python in 90.",
+    color: "from-blue-500 to-cyan-400",
   },
   {
     icon: Sparkles,
-    title: "AI Builds Your Plan",
+    title: "2. AI Generates Plan",
     description:
-      "Our AI generates a personalized roadmap with daily tasks, resources, and milestones tailored to your pace.",
+      "Our engine breaks your goal down into milestones and daily tasks, curating the best resources for each specific step.",
+    color: "from-purple-500 to-pink-400",
   },
   {
     icon: TrendingUp,
-    title: "Learn & Track Progress",
+    title: "3. Execute & Track",
     description:
-      "Follow your daily tasks, track your progress, and watch your skills grow with adaptive learning paths.",
+      "Follow the roadmap day by day. Complete tasks, take quizzes, and watch your progress streak grow.",
+    color: "from-amber-500 to-orange-400",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="bg-white py-20 md:py-32">
+    <section className="relative overflow-hidden bg-white py-16 md:py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-16 text-center"
+          className="mb-20 text-center"
         >
-          <h2 className="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
-            How It Works
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-neutral-900 md:text-4xl lg:text-5xl">
+            From Idea to <span className="text-primary">Done</span> in 3 Steps
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-neutral-600">
-            Three simple steps to transform your ambitions into achievements
+            Complex goals made simple. We handle the planning so you can focus on the doing.
           </p>
         </motion.div>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="relative grid gap-8 lg:grid-cols-3">
+          {/* Connector Line (Desktop) */}
+          <div className="absolute top-24 left-0 hidden w-full -translate-y-1/2 lg:block">
+            <div className="h-0.5 w-full border-t-2 border-dashed border-neutral-200" />
+            <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 text-neutral-200" />
+          </div>
+
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
+              transition={{ delay: index * 0.2, duration: 0.5 }}
+              className="relative"
             >
-              <Card className="group relative h-full overflow-hidden rounded-2xl border-2 transition-all hover:border-primary hover:shadow-lg">
-                <CardContent className="p-8">
-                  {/* Step number */}
-                  <div className="mb-4 text-6xl font-bold text-neutral-100">
-                    {(index + 1).toString().padStart(2, "0")}
-                  </div>
-
-                  {/* Icon */}
-                  <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent p-3 shadow-lg shadow-primary/25">
-                    <step.icon className="h-8 w-8 text-white" />
+              <div className="group relative z-10 h-full rounded-3xl bg-white p-2 transition-all hover:-translate-y-2">
+                <div className="h-full rounded-2xl border border-neutral-100 bg-white p-8 shadow-sm transition-all hover:shadow-xl hover:shadow-primary/5">
+                  {/* Icon Bubble */}
+                  <div className={`mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${step.color} shadow-lg shadow-neutral-200 transition-transform group-hover:scale-110 group-hover:rotate-3`}>
+                    <step.icon className="h-10 w-10 text-white" />
                   </div>
 
                   {/* Content */}
-                  <h3 className="mb-3 text-xl font-bold text-neutral-900">
-                    {step.title}
-                  </h3>
-                  <p className="text-neutral-600">{step.description}</p>
-
-                  {/* Decorative gradient */}
-                  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br from-primary/5 to-accent/5 blur-2xl transition-all group-hover:scale-150" />
-                </CardContent>
-              </Card>
+                  <div className="text-center">
+                    <h3 className="mb-4 text-xl font-bold text-neutral-900">
+                      {step.title}
+                    </h3>
+                    <p className="text-neutral-600 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
