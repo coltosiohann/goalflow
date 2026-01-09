@@ -24,13 +24,15 @@ import {
   Target,
   Lightbulb,
   Code2,
-  CheckSquare
+  CheckSquare,
+  Swords,
+  Trophy
 } from "lucide-react";
 import { clientQueries, type Task } from "@/lib/supabase/queries";
 import { QuizWidget } from "@/components/QuizWidget";
 import confetti from "canvas-confetti";
 
-type TaskType = 'plan' | 'learn' | 'practice' | 'review';
+type TaskType = 'plan' | 'learn' | 'practice' | 'review' | 'boss_battle' | 'quiz';
 
 interface TaskDrawerProps {
   task: Task | null;
@@ -41,13 +43,15 @@ interface TaskDrawerProps {
 }
 
 const taskTypeColors: Record<
-  TaskType,
-  { bg: string; text: string; label: string }
+  string,
+  { bg: string; text: string; label: string; icon?: any }
 > = {
-  plan: { bg: "bg-blue-100", text: "text-blue-700", label: "Plan" },
-  learn: { bg: "bg-purple-100", text: "text-purple-700", label: "Learn" },
-  practice: { bg: "bg-green-100", text: "text-green-700", label: "Practice" },
-  review: { bg: "bg-amber-100", text: "text-amber-700", label: "Review" },
+  plan: { bg: "bg-blue-100", text: "text-blue-700", label: "Plan", icon: Target },
+  learn: { bg: "bg-purple-100", text: "text-purple-700", label: "Learn", icon: BookOpen },
+  practice: { bg: "bg-green-100", text: "text-green-700", label: "Practice", icon: Code2 },
+  review: { bg: "bg-amber-100", text: "text-amber-700", label: "Review", icon: Brain },
+  boss_battle: { bg: "bg-yellow-100", text: "text-yellow-700", label: "Boss Battle", icon: Swords },
+  quiz: { bg: "bg-pink-100", text: "text-pink-700", label: "Quiz", icon: Brain },
 };
 
 export function TaskDrawer({
@@ -74,7 +78,7 @@ export function TaskDrawer({
 
   if (!task) return null;
 
-  const typeStyle = taskTypeColors[task.type];
+  const typeStyle = taskTypeColors[task.type] || taskTypeColors.learn;
   const quizQuestions = Array.isArray(task.quiz) ? task.quiz : [];
   const hasQuiz = quizQuestions.length > 0;
   const hasVideo = !!task.video_url;
@@ -170,6 +174,7 @@ export function TaskDrawer({
                   <Badge
                     className={`${typeStyle.bg} ${typeStyle.text} border-0`}
                   >
+                    {typeStyle.icon && <typeStyle.icon className="mr-1 h-3 w-3" />}
                     {typeStyle.label}
                   </Badge>
                   <span className="text-sm text-neutral-500">
@@ -200,7 +205,7 @@ export function TaskDrawer({
               <div className="rounded-2xl bg-blue-50 p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <Target className="h-5 w-5 text-blue-700" />
-                    <h3 className="font-semibold text-blue-900">
+                  <h3 className="font-semibold text-blue-900">
                     What You&apos;ll Learn
                   </h3>
                 </div>

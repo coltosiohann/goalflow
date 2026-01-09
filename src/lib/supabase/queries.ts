@@ -45,7 +45,7 @@ export type Task = {
   goal_id: string
   milestone_id: string
   day_number: number
-  type: 'plan' | 'learn' | 'practice' | 'review'
+  type: 'plan' | 'learn' | 'practice' | 'review' | 'quiz' | 'boss_battle'
   title: string
   short_guide: string
   video_url: string | null
@@ -57,6 +57,8 @@ export type Task = {
   success_criteria?: string[]
   created_at: string
   resources?: Resource[] // Optional - fetched separately if needed
+  xp_reward?: number // Phase 3: Gamification
+  json_content?: any // Phase 3: For flexible content (Multi-question quizzes, etc)
 }
 
 export type Progress = {

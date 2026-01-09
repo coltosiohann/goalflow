@@ -12,17 +12,19 @@ import {
   type Resource,
   type Task,
 } from "@/lib/supabase/queries";
-import { ArrowLeft, ExternalLink, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, CheckCircle2, Loader2, BookOpen, Brain, Target, Code2, Swords } from "lucide-react";
 import { toast } from "sonner";
 
 const taskTypeColors: Record<
   Task["type"],
-  { bg: string; text: string; label: string }
+  { bg: string; text: string; label: string; icon?: any }
 > = {
-  plan: { bg: "bg-blue-100", text: "text-blue-700", label: "Plan" },
-  learn: { bg: "bg-purple-100", text: "text-purple-700", label: "Learn" },
-  practice: { bg: "bg-green-100", text: "text-green-700", label: "Practice" },
-  review: { bg: "bg-amber-100", text: "text-amber-700", label: "Review" },
+  plan: { bg: "bg-blue-100", text: "text-blue-700", label: "Plan", icon: Target },
+  learn: { bg: "bg-purple-100", text: "text-purple-700", label: "Learn", icon: BookOpen },
+  practice: { bg: "bg-green-100", text: "text-green-700", label: "Practice", icon: Code2 },
+  review: { bg: "bg-amber-100", text: "text-amber-700", label: "Review", icon: Brain },
+  boss_battle: { bg: "bg-yellow-100", text: "text-yellow-700", label: "Boss Battle", icon: Swords },
+  quiz: { bg: "bg-pink-100", text: "text-pink-700", label: "Quiz", icon: Brain },
 };
 
 export default function TaskDetailsPage() {
@@ -120,6 +122,7 @@ export default function TaskDetailsPage() {
       <div>
         <div className="mb-4 flex items-center gap-2">
           <Badge className={`${typeStyle.bg} ${typeStyle.text} border-0`}>
+            {typeStyle.icon && <typeStyle.icon className="mr-1 h-3 w-3" />}
             {typeStyle.label}
           </Badge>
           <span className="text-sm text-neutral-500">

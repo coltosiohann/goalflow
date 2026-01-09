@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { clientQueries, type Goal, type Milestone, type Task, type Progress } from "@/lib/supabase/queries";
-import { ArrowLeft, Target, Calendar, Loader2, Trash2, MoreVertical, Flag, Map } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Loader2, Trash2, MoreVertical, Flag, Map, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -44,6 +44,9 @@ export default function GoalOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingNextWeek, setGeneratingNextWeek] = useState(false);
+
+  // Navigation State
+  const [viewStartDay, setViewStartDay] = useState<number>(1);
 
   const fetchData = useCallback(async () => {
     try {
@@ -86,23 +89,48 @@ export default function GoalOverviewPage() {
     fetchData();
   }, [fetchData]);
 
-  const dayNumber = useMemo(() => {
+  // Initial set of viewStartDay to current day
+  useEffect(() => {
+    if (goal) {
+      const startDate = new Date(goal.created_at);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - startDate.getTime());
+      const currentDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const effectiveDay = Math.min(currentDay, goal.timeframe_days);
+      // Snap to start of that week? Or just set it.
+      // Let's snap to closest 7-day start for cleaner UX: 1, 8, 15
+      const snapDay = Math.floor((effectiveDay - 1) / 7) * 7 + 1;
+      setViewStartDay(snapDay);
+    }
+  }, [goal]);
+
+  const currentDay = useMemo(() => {
     if (!goal) return 1;
     const startDate = new Date(goal.created_at);
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - startDate.getTime());
-    const currentDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.min(currentDay, goal.timeframe_days);
+    const day = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.min(day, goal.timeframe_days);
   }, [goal]);
 
-  const weekStart = useMemo(() => dayNumber, [dayNumber]);
-  const weekEnd = useMemo(
-    () => (goal ? Math.min(dayNumber + 6, goal.timeframe_days) : dayNumber),
-    [dayNumber, goal]
+  const viewEndDay = useMemo(
+    () => (goal ? Math.min(viewStartDay + 6, goal.timeframe_days) : viewStartDay + 6),
+    [viewStartDay, goal]
   );
 
   const handleTaskComplete = () => {
     fetchData();
+  };
+
+  const traverseWeek = (direction: 'next' | 'prev') => {
+    if (!goal) return;
+    if (direction === 'next') {
+      const nextStart = viewStartDay + 7;
+      if (nextStart <= goal.timeframe_days) setViewStartDay(nextStart);
+    } else {
+      const prevStart = viewStartDay - 7;
+      if (prevStart >= 1) setViewStartDay(prevStart);
+    }
   };
 
   const handleDeleteGoal = async () => {
@@ -127,13 +155,16 @@ export default function GoalOverviewPage() {
           feedback: null, // Feedback simplified for this version
         }),
       });
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error("Failed");
+        throw new Error(data.error || "Failed");
       }
       toast.success("Next week generated successfully");
       await fetchData();
     } catch (error) {
-      toast.error("Failed to generate next week");
+      const msg = error instanceof Error ? error.message : "Failed to generate next week";
+      toast.error(msg);
+      console.error(error);
     } finally {
       setGeneratingNextWeek(false);
     }
@@ -174,9 +205,9 @@ export default function GoalOverviewPage() {
     );
   }
 
-  // Calculate current week tasks
+  // Calculate VIEW week tasks
   const weekTasks = tasks.filter(
-    (task) => task.day_number >= weekStart && task.day_number <= weekEnd
+    (task) => task.day_number >= viewStartDay && task.day_number <= viewEndDay
   );
 
   const weekTasksByDay: Record<number, Task[]> = {};
@@ -221,7 +252,7 @@ export default function GoalOverviewPage() {
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Map className="h-4 w-4 text-indigo-500" />
-                  Day {dayNumber}
+                  Day {currentDay}
                 </span>
                 <span className="h-1 w-1 rounded-full bg-neutral-300" />
                 <span className="flex items-center gap-1.5">
@@ -232,20 +263,27 @@ export default function GoalOverviewPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                onClick={handleGenerateNextWeek}
-                disabled={generatingNextWeek}
-                className="bg-white/80 hover:bg-white text-indigo-600 border border-indigo-100 shadow-sm backdrop-blur-sm"
-              >
-                {generatingNextWeek ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Planning...
-                  </>
-                ) : (
-                  <>Generate Next Week</>
-                )}
-              </Button>
+              {goal && new Set(tasks.map(t => t.day_number)).size >= goal.timeframe_days ? (
+                <Button disabled className="bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm opacity-100">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Roadmap Complete
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleGenerateNextWeek}
+                  disabled={generatingNextWeek}
+                  className="bg-white/80 hover:bg-white text-indigo-600 border border-indigo-100 shadow-sm backdrop-blur-sm"
+                >
+                  {generatingNextWeek ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Planning...
+                    </>
+                  ) : (
+                    <>Generate Next Week</>
+                  )}
+                </Button>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -288,8 +326,30 @@ export default function GoalOverviewPage() {
         {/* Current Focus Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight">Current Focus</h2>
-            <Badge variant="outline" className="px-3 py-1">Days {weekStart} - {weekEnd}</Badge>
+            <h2 className="text-2xl font-bold tracking-tight">Week View</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => traverseWeek('prev')}
+                disabled={viewStartDay <= 1}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Badge variant="outline" className="px-3 py-1 h-8 flex items-center justify-center min-w-[100px]">
+                Days {viewStartDay} - {viewEndDay}
+              </Badge>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => traverseWeek('next')}
+                disabled={goal ? viewEndDay >= goal.timeframe_days : true}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4 rotate-180" />
+              </Button>
+            </div>
           </div>
 
           {weekTasks.length === 0 ? (
@@ -298,26 +358,55 @@ export default function GoalOverviewPage() {
                 <div className="h-12 w-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 mb-4">
                   <Calendar className="h-6 w-6" />
                 </div>
-                <h3 className="font-semibold text-lg mb-1">No tasks scheduled</h3>
+                <h3 className="font-semibold text-lg mb-1">
+                  {goal && new Set(tasks.map(t => t.day_number)).size >= goal.timeframe_days
+                    ? "Roadmap Complete"
+                    : "No tasks scheduled for this period"}
+                </h3>
                 <p className="text-muted-foreground mb-4 max-w-sm">
-                  You&apos;re all caught up for this period. Ready to plan the next phase?
+                  {goal && new Set(tasks.map(t => t.day_number)).size >= goal.timeframe_days
+                    ? "You have a full curriculum planned for this goal. Good luck!"
+                    : "You're all caught up for this period. Move to next week or generate more?"}
                 </p>
-                <Button onClick={handleGenerateNextWeek} disabled={generatingNextWeek}>
-                  {generatingNextWeek ? "Generating..." : "Generate Next Week"}
-                </Button>
+                {!(goal && new Set(tasks.map(t => t.day_number)).size >= goal.timeframe_days) && (
+                  <Button onClick={handleGenerateNextWeek} disabled={generatingNextWeek}>
+                    {generatingNextWeek ? "Generating..." : "Generate Next Week"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6">
-              {Array.from({ length: weekEnd - weekStart + 1 }, (_, idx) => {
-                const day = weekStart + idx;
+            <div className="relative border-l-2 border-indigo-100/50 pl-8 ml-4 space-y-12 pb-4">
+              {Array.from({ length: viewEndDay - viewStartDay + 1 }, (_, idx) => {
+                const day = viewStartDay + idx;
                 const dayTasks = weekTasksByDay[day] || [];
-                if (dayTasks.length === 0) return null;
+                // if (dayTasks.length === 0) return null; // Show empty days? Maybe just skip for now to save space
+
+                if (dayTasks.length === 0) {
+                  return (
+                    <div key={day} className="relative">
+                      <div className="absolute -left-[39px] top-1 h-5 w-5 rounded-full bg-neutral-100 border-4 border-white ring-1 ring-neutral-200" />
+                      <div className="flex items-center gap-2 text-neutral-400">
+                        <span className="text-sm font-bold">Day {day}</span>
+                        <span className="text-xs">— Rest Day</span>
+                      </div>
+                    </div>
+                  )
+                }
 
                 return (
-                  <div key={day} className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground pl-1">Day {day}</h3>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div key={day} className="relative">
+                    {/* Timeline Node */}
+                    <div className="absolute -left-[39px] top-1 h-5 w-5 rounded-full bg-indigo-600 border-4 border-white ring-1 ring-indigo-100 shadow-sm" />
+
+                    {/* Day Header */}
+                    <div className="mb-4 flex items-center gap-3">
+                      <h3 className="text-lg font-bold text-indigo-950">Day {day}</h3>
+                      <div className="h-px flex-1 bg-gradient-to-r from-indigo-50 to-transparent" />
+                    </div>
+
+                    {/* Tasks Stack */}
+                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
                       {dayTasks.map((task) => {
                         const taskProgress = progress.find((p) => p.task_id === task.id);
                         return (
