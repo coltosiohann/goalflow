@@ -205,15 +205,15 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-white/10">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex flex-col">
                       <span className="text-sm text-indigo-100">Current Milestone</span>
                       <span className="text-xl font-semibold">Fundamentals</span>
                     </div>
                     {activeGoal && (
-                      <Link href={`/goals/${activeGoal.id}`} className="group/btn flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-all font-medium text-sm backdrop-blur-md">
-                        Here&apos;s a clean view of your goal, streak, and today&apos;s
-                        momentum.        <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                      <Link href={`/goals/${activeGoal.id}`} className="group/btn flex items-center justify-center md:w-auto w-full gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all font-medium text-sm backdrop-blur-md">
+                        Continue Journey
+                        <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
                       </Link>
                     )}
                   </div>
