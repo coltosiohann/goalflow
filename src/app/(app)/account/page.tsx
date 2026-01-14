@@ -128,7 +128,7 @@ export default function AccountPage() {
 
       <div className="grid gap-8 lg:grid-cols-12">
         {/* Sidebar Navigation */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 min-w-0">
           <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
             {navItems.map((item) => (
               <button
@@ -149,7 +149,7 @@ export default function AccountPage() {
         </div>
 
         {/* Main Content Area */}
-        <div className="lg:col-span-9 space-y-6">
+        <div className="lg:col-span-9 space-y-6 min-w-0">
 
           {/* Profile Tab */}
           {activeTab === "profile" && (
@@ -161,7 +161,7 @@ export default function AccountPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Avatar Placeholder */}
-                  <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-6 text-center sm:text-left w-full">
                     <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 border-4 border-white shadow-xl flex items-center justify-center">
                       <span className="text-3xl font-bold text-indigo-600">
                         {fullName ? fullName.charAt(0).toUpperCase() : "U"}
