@@ -78,12 +78,22 @@ function detectDomain(goal: string): string {
 
 // --- Prompts ---
 
+type UserLevel = 'Novice' | 'Intermediate' | 'Expert'
+
 const ARCHITECT_SYSTEM_PROMPT = `You are The Architect, an expert technical curriculum designer.
-Your goal is to design a PROJECT-BASED learning path for a specific goal.
-Instead of generic chapters, design "Milestones" that represent stages of building a real-world project or achieving a concrete outcome.
+Your goal is to design a PROJECT-BASED learning path for a specific goal, adapted to the student's current proficiency level.
+
+INPUT:
+- Goal: User's objective.
+- Level: Novice, Intermediate, or Expert.
+
+ADAPTATION LOGIC:
+1. Novice: Start from absolute basics. Cover fundamentals thoroughly.
+2. Intermediate: SKIP the introductions. Assume they know syntax/basics. specific "Refresher" if needed, then jump to Building.
+3. Expert: Focus ONLY on advanced patterns, architecture, performance, and niche edge-cases.
 
 CRITICAL INSTRUCTIONS:
-1. Outcome-Oriented: Each milestone title should sound like a completed step (e.g., "Build the Core API", not "Learn APIs").
+1. Outcome-Oriented: Each milestone title should sound like a completed step.
 2. Progression: Ensure a logical flow from Basics -> Implementation -> Polishing.
 3. Focus: Do NOT generate daily tasks here. Just the high-level chapters.
 
@@ -148,12 +158,12 @@ OUTPUT FORMAT: valid JSON with strict structure:
 
 // --- Generators ---
 
-async function generateMilestones(openai: OpenAI, goal: string, timeframe: number, domain: string): Promise<RoadmapMilestone[]> {
+async function generateMilestones(openai: OpenAI, goal: string, timeframe: number, domain: string, level: string = 'Novice'): Promise<RoadmapMilestone[]> {
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: ARCHITECT_SYSTEM_PROMPT },
-      { role: 'user', content: `Goal: "${goal}"\nDuration: ${timeframe} days\nDomain: ${domain}\n\nDivide this into 3-5 logical milestones.` }
+      { role: 'user', content: `Goal: "${goal}"\nDuration: ${timeframe} days\nDomain: ${domain}\nLevel: ${level}\n\nDivide this into 3-5 logical milestones.` }
     ],
     temperature: 0.7,
     response_format: { type: 'json_object' }
@@ -205,7 +215,7 @@ async function generateTasksForMilestone(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { goal, timeframe_days } = body
+    const { goal, timeframe_days, level } = body
 
     if (!goal || !timeframe_days) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -221,8 +231,8 @@ export async function POST(request: NextRequest) {
     const openai = getOpenAIClient()
 
     // Step 1: Architect (Milestones)
-    console.log('[AI] Architect starting...')
-    const milestones = await generateMilestones(openai, goal, timeframe_days, domain)
+    console.log(`[AI] Architect starting for ${level || 'Novice'} user...`)
+    const milestones = await generateMilestones(openai, goal, timeframe_days, domain, level || 'Novice')
     console.log(`[AI] Architect created ${milestones.length} milestones.`)
 
     // Step 2: Teacher (Tasks) - Helper to run in parallel or sequence
