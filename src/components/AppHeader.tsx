@@ -50,6 +50,17 @@ export function AppHeader() {
 
         {/* Actions - Right Aligned (Explore + Profile) */}
         <div className="flex items-center gap-2 md:gap-3 z-20">
+          {/* Mobile Only: New Goal Button */}
+          <Link href="/goals/new" className="md:hidden">
+            <Button
+              variant={isActive("/goals/new") ? "secondary" : "ghost"}
+              size="icon"
+              className={`rounded-xl transition-all ${isActive("/goals/new") ? "bg-indigo-50 text-indigo-700" : "text-neutral-600 hover:text-indigo-600 hover:bg-indigo-50/50"}`}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </Link>
+
           <Link href="/explore">
             <Button
               variant={isActive("/explore") ? "secondary" : "ghost"}

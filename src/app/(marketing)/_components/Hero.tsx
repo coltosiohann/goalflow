@@ -50,7 +50,14 @@ export function Hero() {
             <div className="mt-8 flex items-center gap-4 text-sm text-neutral-500 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
               <div className="flex -space-x-2">
                 {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-neutral-200" />
+                  <div key={i} className="relative h-8 w-8 rounded-full border-2 border-white bg-neutral-100 overflow-hidden">
+                    <Image
+                      src={`/avatars/avatar-${i}.png`}
+                      alt={`User ${i}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 ))}
               </div>
               <div>Trusted by 10k+ achievers</div>
@@ -58,15 +65,15 @@ export function Hero() {
           </div>
 
           {/* Right Column: Hero Image */}
-          <div className="relative mx-auto w-full max-w-[500px] lg:max-w-none animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+          <div className="relative mx-auto w-full max-w-[500px] lg:max-w-none animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500 lg:-mr-12">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 rounded-full blur-[60px] -z-10" />
             <Image
               src="/hero-phones.png"
               alt="GoalFlow Mobile Interface"
-              width={800}
-              height={600}
+              width={1000}
+              height={800}
               priority
-              className="w-full h-auto drop-shadow-2xl hover:scale-[1.01] transition-transform duration-700 object-contain"
+              className="w-full h-auto drop-shadow-2xl hover:scale-[1.02] transition-transform duration-700 object-contain lg:scale-125 lg:translate-x-12"
             />
           </div>
 

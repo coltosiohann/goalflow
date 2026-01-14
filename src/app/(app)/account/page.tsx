@@ -161,7 +161,7 @@ export default function AccountPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Avatar Placeholder */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
                     <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 border-4 border-white shadow-xl flex items-center justify-center">
                       <span className="text-3xl font-bold text-indigo-600">
                         {fullName ? fullName.charAt(0).toUpperCase() : "U"}

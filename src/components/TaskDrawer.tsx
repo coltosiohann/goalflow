@@ -29,6 +29,7 @@ import {
   Trophy
 } from "lucide-react";
 import { clientQueries, type Task } from "@/lib/supabase/queries";
+import { getVideoEmbedUrl } from "@/lib/video-utils";
 import { QuizWidget } from "@/components/QuizWidget";
 import confetti from "canvas-confetti";
 
@@ -77,6 +78,9 @@ export function TaskDrawer({
   }, [open]);
 
   if (!task) return null;
+
+  console.log('Task video URL:', task.video_url);
+  console.log('Embed URL:', getVideoEmbedUrl(task.video_url));
 
   const typeStyle = taskTypeColors[task.type] || taskTypeColors.learn;
   const quizQuestions = Array.isArray(task.quiz) ? task.quiz : [];
@@ -283,7 +287,7 @@ export function TaskDrawer({
                   <div className="relative" style={{ paddingBottom: "56.25%" }}>
                     <iframe
                       className="absolute inset-0 h-full w-full"
-                      src={task.video_url || ''}
+                      src={getVideoEmbedUrl(task.video_url) || ''}
                       title={task.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen

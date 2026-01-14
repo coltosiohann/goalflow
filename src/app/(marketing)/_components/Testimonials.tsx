@@ -11,6 +11,7 @@ const testimonials = [
     content:
       "I used GoalFlow to transition into React development. The daily roadmap kept me accountable when tutorials alone couldn't. I landed my first job in 3 months!",
     avatar: "SC",
+    image: "/avatars/avatar-1.png",
     color: "bg-emerald-100 text-emerald-700",
   },
   {
@@ -19,6 +20,7 @@ const testimonials = [
     content:
       "Finally, a tool that doesn't just list tasks but actually teaches you. The curated resources for each step saved me hours of searching.",
     avatar: "MJ",
+    image: "/avatars/avatar-2.png",
     color: "bg-blue-100 text-blue-700",
   },
   {
@@ -27,6 +29,7 @@ const testimonials = [
     content:
       "I wanted to learn 3D modeling but was overwhelmed. GoalFlow broke it down into 45-minute daily chunks. It made the impossible feel manageable.",
     avatar: "ER",
+    image: "/avatars/avatar-3.png",
     color: "bg-purple-100 text-purple-700",
   },
 ];
@@ -81,8 +84,14 @@ export function Testimonials() {
 
                   {/* Author */}
                   <div className="flex items-center gap-4 pt-6 border-t border-neutral-100">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${testimonial.color} text-sm font-bold`}>
-                      {testimonial.avatar}
+                    <div className={`relative flex h-12 w-12 items-center justify-center rounded-full ${testimonial.color} text-sm font-bold overflow-hidden`}>
+                      <div className="absolute inset-0">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
