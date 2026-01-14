@@ -112,15 +112,7 @@ export function AssessmentStep({ topic, onComplete }: AssessmentStepProps) {
     }
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4 animate-in fade-in">
-                <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
-                <p className="text-muted-foreground text-center">
-                    Consulting the AI Examiner...<br />
-                    <span className="text-xs opacity-70">Generating unique questions for "{topic}"</span>
-                </p>
-            </div>
-        )
+        return <LoadingStep topic={topic} />
     }
 
     const currentQ = questions[currentQIndex]
